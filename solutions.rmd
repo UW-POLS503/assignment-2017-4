@@ -1,0 +1,114 @@
+# Setup
+```{r}
+library("tidyverse")
+library("ggplot2")
+```
+
+# Problem 8.2
+```{r}
+data <- read.csv("Ch08.Ex2.PeaceCorpsData/PeaceCorpsHW.csv")
+```
+
+## Problem A
+Intuitively, it makes sense that people would be more likely to apply to the peace corps when the economy is doing poorly. When the economy is booming, it is easier for young people to get jobs, so they have more options. When there are fewer job options, some young people may be swayed to apply to the Peace Corps.
+
+## Problem B
+```{r}
+TwoB <- lm(appspc ~ unemployrate + yr1 + yr2 + yr3 + yr4 + yr5 + yr6, data=data)
+summary(TwoB)
+```
+For each one unit increase in the unemployment rate, there is a corresponding 1.107 increase in the conditional mean of peace orpos applications. The coefficient is not statistically significant. It seems plausible that the relationship between applications and unemployment is different between states due to time-invariant factors (e.g. people in Mississippi may be more inclined to apply to the peace corps than people in Alabama for some reason), so a better model may include fixed effects on state.
+
+
+## Problem C
+```{r}
+ggplot(data, aes(x=unemployrate, y=appspc, label=stateshort)) + geom_text(aes(label=stateshort))
+# Referenced an online ggplot tutorial to create the plot
+# Citation
+# "Introduction to R Graphics with Ggplot2." Harvad.edu. Harvard University, n.d. Web. 3 June 2017. <http://tutorials.iq.harvard.edu/R/Rgraphics/Rgraphics.html>.
+# Also referenced a Stack Overflow Post in creating this plot
+# Reference
+# "Label Points in Geom_point." Stack Overflow. Stack Exchange Inc., n.d. Web. 3 June 2017. <https://stackoverflow.com/questions/15624656/label-points-in-geom-point>. Referenced the answer by username "agstudy" on (answer was edited by username "micstr" on July 31, 2016)
+```
+The graph makes the points from the District of Columbia really stick out. We can also run the model with fixed effects on state to see how the coefficinet on DC is different from the coefficients on other states.
+
+```{r}
+TwoC <- lm(appspc ~ unemployrate + factor(state) + yr1 + yr2 + yr3 + yr4 + yr5 + yr6, data=data)
+summary(TwoC)
+```
+The coefficient on the District of Columbia is quite a bit higher (almost three times higher than the next highest state coefficient). The high coefficient on District of Columbia means that the mean value of appspc is quite a bit higher in the District of Columbia than in the other states. How might this affect the pooled regression? My guess is that the coefficient on umemployrate will be much higher in the pooled regression with DC included than without DC included, because the Y-values for the DC points are much higher than the Y-values for the other states' points. As the output below shows, the unemployrate coefficient is far lower in the pooled regression without DC (-1.964) than with DC (1.107).
+
+```{r}
+no_DC <- subset(data, state != "DISTRICT OF COLUMBIA")
+# referenced documentation on subset -- http://www.statmethods.net/management/subset.html -- to write the code to subset DC
+# Citation: "Subsetting Data." Quick - R. Robert I. Kabacoff, Ph.D., n.d. Web. 3 June 2017. <http://www.statmethods.net/management/subset.html>.
+
+
+check_no_DC <- lm(appspc ~ unemployrate + yr1 + yr2 + yr3 + yr4 + yr5 + yr6, data=no_DC)
+summary(check_no_DC)
+```
+
+We can also look at the scatterplot with and without DC. The scatter looks dramatically different without DC than it did with DC. The slight positive slope of the regression line is now a slight negative slope.
+```{r}
+ggplot(no_DC, aes(x=unemployrate, y=appspc, label=stateshort)) + geom_text(aes(label=stateshort))
+# Referenced an online ggplot tutorial to create the plot
+# Citation
+# "Introduction to R Graphics with Ggplot2." Harvad.edu. Harvard University, n.d. Web. 3 June 2017. <http://tutorials.iq.harvard.edu/R/Rgraphics/Rgraphics.html>.
+# Also referenced a Stack Overflow Post in creating this plot
+# Reference
+# "Label Points in Geom_point." Stack Overflow. Stack Exchange Inc., n.d. Web. 3 June 2017. <https://stackoverflow.com/questions/15624656/label-points-in-geom-point>. Referenced the answer by username "agstudy" on (answer was edited by username "micstr" on July 31, 2016)
+```
+
+## Problem D
+```{r}
+no_DC_pooled <- lm(appspc ~ unemployrate + yr1 + yr2 + yr3 + yr4 + yr5 + yr6, data=no_DC)
+summary(no_DC_pooled)
+```
+As shown in Part C, the coefficient on unemployrate went from beign positive to negative. For each one unit increase in the unemployment rate without DC's data points, there is a 1.964 unit decrease in in appspc. The coefficient is statistically significant at the alpha = .15 level.
+
+## Problem E
+The results change significantly. The coefficient in the pooled regression is -1.964, versus 0.8125 in the fixed effects model. The fixed effects model is preferable in my opinion. Controlling for fixed effects controls for time invariant variables that could confound the relationship between unemployment rate and applications (e.g. perhaps people in DC are more likely to apply to the Peace Corps than people in Alabama for whatever reason). In addition, the fixed effect on year controls for time period effects (i.e. effects that change the number of applications in a year across all states).
+```{r}
+no_DC_fixed <- lm(appspc ~ unemployrate + factor(state) + factor(year), data=no_DC)
+summary(no_DC_fixed)
+```
+
+## Problem F
+```{r}
+# I used code from Bailey's chapter 8 computing corner to run this code
+library(plm)
+plm(appspc ~ unemployrate, data=no_DC, index=c("state", "year"), model="within", effect="twoways")
+```
+The coefficient on unemployrate is the same using the de-meaned approach or the LSDV approach.
+
+
+# Problem 8.5
+```{r}
+school_data <- read.csv("Ch08.Ex5.TexasSchoolBoardsData/TexasSchoolBoard.csv")
+```
+
+## Problem A
+```{r}
+FiveA <- lm(LnAvgSalary ~ OnCycle, data=school_data)
+summary(FiveA)
+```
+OnCycle is a dichotomous variable that can take values 0 or 1. The coefficient on OnCycle denotes the change in the conditional mean of logged, average teacher salaries when the election takes place on a full cycle. Since LnAvgSalary is the logged average salary, we know that a one unit increase in OnCycle causes a 3.06% decrease in average teacher salary in all districts. There could be bias in our estimates if there are omitted variables (e.g. period effects that cause the average logged, average teacher salary to differ between years). 
+
+If districts in which the teacher unions are more powerful are more able to get off cycle elections, then there could be some bias caused by reverse causality. I would assume that the power of teacher unions is correlated with salary. If that is the case, then the power of unions is a confounder, since it is correlated with both OnCycle and LnAvgSalary.
+
+## Problem B
+```{r}
+# Referenced Bailey's "Computing Corner" for Chapter 8 to write this code
+FiveB <- lm(LnAvgSalary ~ CycleSwitch + AfterSwitch + AfterCycleSwitch, data=school_data)
+summary(FiveB)
+```
+The coefficients tell us several things. The coefficient on CycleSwitch tells us the difference in the intercepts between the districts that switched and did not switch. That is, among districts that switched, LnAvgSalary was .024 lower than among districts that did not switch. The coefficient on AfterSwtich provides the difference in the conditional mean of Y after 2007 versus before 2007. The interaction term provides the difference in difference. In the post-2007 time period, the change in average teacher salary among districts that switched to OnCycle elections was .86% lower than the change in districts that did not switch.
+
+The effect of moving to on-cycle elections on salary appears to be negative. That is, on-cycle elections made teacher salaries increase by a smaller amount than they otherwise would have if the districts that switched had not switched. I do not know if we can say anything about the type of districts that switched. The salaries in all districts are higher after 2007 than before 2007, but the increase was more marked in districts that did not switch.
+
+
+## Problem C
+```{r}
+FiveC <- lm(LnAvgSalary ~ OnCycle + factor(DistNumber), data=school_data)
+summary(FiveC)
+```
