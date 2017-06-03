@@ -30,8 +30,6 @@ This assignment will require the following R packages:
 library("AER")
 ```
 
-**In Progress**
-
 # Bailey 8.2
 
 Complete Chapter 8, Exercise 2 in @Bailey2016a
