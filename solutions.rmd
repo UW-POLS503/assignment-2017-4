@@ -112,3 +112,24 @@ The effect of moving to on-cycle elections on salary appears to be negative. Tha
 FiveC <- lm(LnAvgSalary ~ OnCycle + factor(DistNumber), data=school_data)
 summary(FiveC)
 ```
+
+The results show that the conditional mean of LnAvgSalary is .08% higher among districts that are on cycle versus off cycle. The coefficient is not statistically significant. Since time fixed effects are not included, period effects (e.g. an effect that would cause a change in teacher salaries in all of the districts) are not controlled for.
+
+## Problem D
+```{r}
+FiveD <- lm(LnAvgSalary ~ OnCycle + factor(DistNumber) + factor(Year), data=school_data)
+summary(FiveD)
+```
+The conditional mean of LnAvgSalary is .85% lower among districts that are OnCycle versus districts that are off cycle. The coefficient is statistically significant.
+
+### Problem Di
+Since district fixed effects are included, any characteristics that are specific to districts that do not change over time will be controlled for. So, preexisting characteristics that do not change between 2003 and 2009 will be controlled for. 
+
+### Problem Dii
+Period effects that affect all districts are controlled for by including Year fixed effects.
+
+## Problem E
+No. We would certainly still be able to compare the conditional mean of LnAvgSalary among districts that are on or off cycle. However, that comparison would not be particularly useful, unless we included some omitted variables (e.g. power of teacher unions). The useful part of using the diff in diff or two-way fixed effects approach is that we are able to see how salaries changed in districts that did not switch versus districts that did switch. We can then use the comparison to determine the effect of holding elections on cycle. The comparison is useful as long as we are comfortable assuming that the change in teacher salaries among districts that did switch would have mirrored the change among districts that did not switch had the districts that switched not switched.
+
+
+# Problem 11.3
