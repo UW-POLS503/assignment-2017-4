@@ -22,7 +22,7 @@ For each one unit increase in the unemployment rate, there is a corresponding 1.
 
 ## Problem C
 ```{r}
-ggplot(data, aes(x=unemployrate, y=appspc, label=stateshort)) + geom_text(aes(label=stateshort))
+ggplot(data, aes(x=unemployrate, y=appspc)) + geom_text(aes(label=stateshort))
 # Referenced an online ggplot tutorial to create the plot
 # Citation
 # "Introduction to R Graphics with Ggplot2." Harvad.edu. Harvard University, n.d. Web. 3 June 2017. <http://tutorials.iq.harvard.edu/R/Rgraphics/Rgraphics.html>.
@@ -50,7 +50,7 @@ summary(check_no_DC)
 
 We can also look at the scatterplot with and without DC. The scatter looks dramatically different without DC than it did with DC. The slight positive slope of the regression line is now a slight negative slope.
 ```{r}
-ggplot(no_DC, aes(x=unemployrate, y=appspc, label=stateshort)) + geom_text(aes(label=stateshort))
+ggplot(no_DC, aes(x=unemployrate, y=appspc)) + geom_text(aes(label=stateshort))
 # Referenced an online ggplot tutorial to create the plot
 # Citation
 # "Introduction to R Graphics with Ggplot2." Harvad.edu. Harvard University, n.d. Web. 3 June 2017. <http://tutorials.iq.harvard.edu/R/Rgraphics/Rgraphics.html>.
@@ -133,3 +133,39 @@ No. We would certainly still be able to compare the conditional mean of LnAvgSal
 
 
 # Problem 11.3
+```{r}
+congress_data <- read.csv("Ch11.Ex3.CongressionalElectionsData/CongressRD.csv")
+```
+
+## Problem A
+As mentioned in the equation, politicians may try to appeal to median voters, as opposed to strictly adhering to their party's views on all issues. In addition, there are some omitted variables that could change a politician's ideology regardless of party (e.g. a Republican that loves the outdoors may be more likely to support environmental regulations than other republicans, so love of the outdoors could be an omitted variable).
+
+## Problem B
+RD models can fight endogeneity because they do not require that politicial party not be correlated with the error term. The inclusion of an assignment variable on the right hand side of the equation eliminates any potential correlation between the error terms and political party.
+
+## Problem C
+```{r}
+ggplot(congress_data, aes(x=GOP2party2010, y=Ideology)) + geom_point()
+# Referenced an online ggplot tutorial to create the plot
+# Citation
+# "Introduction to R Graphics with Ggplot2." Harvad.edu. Harvard University, n.d. Web. 3 June 2017. <http://tutorials.iq.harvard.edu/R/Rgraphics/Rgraphics.html>.
+# Also referenced a Stack Overflow Post in creating this plot
+# Reference
+# "Label Points in Geom_point." Stack Overflow. Stack Exchange Inc., n.d. Web. 3 June 2017. <https://stackoverflow.com/questions/15624656/label-points-in-geom-point>. Referenced the answer by username "agstudy" on (answer was edited by username "micstr" on July 31, 2016)
+```
+There is a sharp discontinuity where GOP2party2010 is equal to .5. More specifically, in districts where more than 50% of the votes went to the Republican candidate, political ideology tended to have a much higher score. Slopes on both sides of the discontinuity seem to positive. I think that the RD will show that ideology scores tend to be closer to 0 in districts where GOP2party2010 is close to .5 and further from 0 where the margin of victory was larger.
+
+## Problem D
+The assignment variable is GOP2party2010. The treatment variable is a Republican win, where the treatment is 1 if the assignment variable is greater than or equal to .5 and 0 otherwise.
+
+The most basic RD model would entail keeping the slopes of the regression lines the same across the discontinuity. The following formula would describe such a relationship:
+
+$$
+\text{Ideology} = \beta_0 + \beta_{1}\text{RepublicanWin}_i + \beta_{2}\text{(GOP2party2010}_i - .5) + \epsilon_i
+$$
+Beta-knot is the intercept for the first line; that is where the non-treatment group regression line crosses the y-axis. Beta1 is the difference between the intercept of the non-treatment group regression line and the treatment group regression line. Beta2 is the slope paratmeter for each line.
+
+## Problem E
+```{r}
+
+```
