@@ -275,3 +275,73 @@ We can calculate the value similarly to how we calculated the fitted ideology sc
 The fitted values are very similar to the fitted values from part F for republicans. They are quite a bit lower for democrats in part G versus part F. I would guess that the values are more similar for Republicans than for Democrats in parts F and G because the slope for Republicans is much lower than the slope for Democrats, so changing the GOP2party2010 values has less of an effect on the Republican fitted values than on the Democrat fitted values.
 
 ## Problem H
+Bailey discusses a potential test to determine if clustering is present. Bailey suggests creating a histogram, which is a useful, easy check to see if clustering exists. Plotting a histogram does not seem to identify an obvious clustering.
+```{r}
+ggplot(congress_data, aes(x=assignment_var)) + geom_histogram()
+# Referenced an online ggplot tutorial to create the histogram
+# Citation
+# "Introduction to R Graphics with Ggplot2." Harvad.edu. Harvard University, n.d. Web. 3 June 2017. <http://tutorials.iq.harvard.edu/R/Rgraphics/Rgraphics.html>.
+```
+
+## Problem I
+Bailey  recommends determining if the treatment causes a discontinuity in other variables, with the argument being that if that is the case, then the treatment is not the only thing affected by the treatment. If other variables are affected by the treatment, then RD may not be an appropriate method for analyzing the question of interest. 
+
+### Child Poverty
+```{r}
+check1 <- lm(ChildPoverty ~ GOPwin2010 + GOP2party2010 + GOP2party2010*GOPwin2010, data=congress_data)
+summary(check1)
+```
+
+### Median Income
+```{r}
+check2 <- lm(MedianIncome ~ GOPwin2010 + GOP2party2010 + GOP2party2010*GOPwin2010, data=congress_data)
+summary(check2)
+```
+
+### Obama2008
+```{r}
+check3 <- lm(Obama2008 ~ GOPwin2010 + GOP2party2010 + GOP2party2010*GOPwin2010, data=congress_data)
+summary(check3)
+```
+
+### WhitePct
+```{r}
+check4 <- lm(WhitePct~ GOPwin2010 + GOP2party2010 + GOP2party2010*GOPwin2010, data=congress_data)
+summary(check4)
+```
+
+Since the coefficient on GOPwin2010 is significant in each regression, there is a significant discontinuity where GOP2party2010=.5 in each regression. That means that the treatment is correlated with the treatment. Therefore, ChildPoverty, MedianIncome, Obama2008, and WhitePct should all be included as variables on the right hand side of the equation, since we want Ideology to be the only variable that is affected by the treatment.
+
+## Probm J
+```{r}
+diff_slopes3 <- lm(Ideology ~ GOPwin2010 + GOP2party2010 + GOP2party2010*GOPwin2010 + ChildPoverty + MedianIncome + Obama2008 + WhitePct, data=congress_data)
+summary(diff_slopes3)
+```
+The coefficient on GOPwin2010 is about 1.05, meaning that the mean Ideology is about 1.05 higher at GOP2party2010=.5 for Republicans than Democrats. Including the new variables on the right hand side equation means that any changes in ChildPoverty, MedianIncome, Obama2008, and WhitePct resulting from the treatment are controlled for.
+
+## Problem K
+```{r}
+congress_data$squared_int <- (congress_data$GOP2party2010 + congress_data$GOP2party2010) ^2
+quad <- lm(Ideology ~ GOPwin2010 + GOP2party2010 + GOP2party2010 + GOP2party2010*GOPwin2010 + squared_int + ChildPoverty + MedianIncome + Obama2008 + WhitePct, data=congress_data)
+# Citation: Bailey's Chapter 7 Computing Corner. Referenced the Chapter 7 computing corner to figure out how to make a quadratic term
+summary(quad)
+```
+The shape of the regression line may change when using a quadratic function, but the coefficient on GOPwin2010 is basically the exact same as it was in part J. The fitted values, especially as we move further away from GOP2party2010=.5, will be quite different. The beta-knot value is also different, as is to be expected by changing the slope of the non-treated regression line.
+
+## Problem L
+```{r}
+window <- subset(congress_data, GOP2party2010 > .4)
+window <- subset(window, GOP2party2010 < .6)
+# referenced documentation on subset -- http://www.and statmethods.net/management/subset.html -- to write the code to subset congress_data
+# Citation: "Subsetting Data." Quick - R. Robert I. Kabacoff, Ph.D., n.d. Web. 3 June 2017. <http://www.statmethods.net/management/subset.html>.
+
+window_model <- lm(Ideology ~ GOPwin2010 + GOP2party2010 + GOP2party2010*GOPwin2010  + ChildPoverty + MedianIncome + Obama2008 + WhitePct, data=window)
+summary(window_model)
+```
+The coefficient on GOP2party2010 is slightly lower than the model from part j (1.201 vs 1.051). The difference in slopes in the treated and non-treated groups is slightly lower ( -.6745 vs -.1771).
+
+## Problem M
+The model in part l is the most credible. There are a good number of data points in the narrow window and all it includes several control variables that should be controlled for. The data does not seem to need a quadratic fit, especially in such a narrow window.
+
+
+# Problem 11.4
