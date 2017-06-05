@@ -161,11 +161,117 @@ The assignment variable is GOP2party2010. The treatment variable is a Republican
 The most basic RD model would entail keeping the slopes of the regression lines the same across the discontinuity. The following formula would describe such a relationship:
 
 $$
-\text{Ideology} = \beta_0 + \beta_{1}\text{RepublicanWin}_i + \beta_{2}\text{(GOP2party2010}_i - .5) + \epsilon_i
+\text{Ideology} = \beta_0 + \beta_{1}\text{GOPwin2010}_i + \beta_{2}\text{(GOP2party2010}_i) + \epsilon_i
 $$
 Beta-knot is the intercept for the first line; that is where the non-treatment group regression line crosses the y-axis. Beta1 is the difference between the intercept of the non-treatment group regression line and the treatment group regression line. Beta2 is the slope paratmeter for each line.
 
 ## Problem E
 ```{r}
-
+simple_rd <- lm(Ideology ~ GOPwin2010 + GOP2party2010, data=congress_data)
+summary(simple_rd)
+# Citation: Bailey's Chapter 8 Computing Corner
 ```
+The intercept coefficient states that the non-treatment group regression line crosses the y-axis at -.48. the treatment group regression line crosses the y-axis at .52 (1-.48). The conditional mean Ideology score is 1 higher in districts in which a republican narrowly won versus a district where a republican narrowly lost, indicating an effect of 1 due to being republican. The coeffecient on GOP2party2010 states that the slope of each line is .23; for each one unit increase in GOP2party2010, there is a corresponding .23 increase in the conditional mean ideology score.
+
+
+## Problem F
+The equation is now:
+$$
+\text{Ideology} = \beta_0 + \beta_{1}\text{GOPwin2010}_i + \beta_{2}\text{(GOP2party2010}_i - .5) + \beta_3\text{(GOP2party2010}_i - .5)\text{GOPwin2010}_i +  \epsilon_i
+$$
+```{r}
+diff_slopes <- lm(Ideology ~ GOPwin2010 + assignment_var + assignment_var*GOPwin2010, data=congress_data)
+summary(diff_slopes)
+```
+The beta-knot and GOPWin2010 coefficients are pretty similar. The coefficient on assignment_var is more than twice as high. The coefficient on assignment_var now encapsulates the slope of the non-treated group regression line. The slope is much higher in the non-treated group than in the treated group, hence the change in this variable. The coefficient on the interaction term is negative, which shows that the slope is .49 lower in the treated group.
+
+```{r}
+# nulls deleted
+congress_data <- na.omit(congress_data)
+congress_data$fitted <- predict(diff_slopes)
+ggplot(congress_data, aes(x=assignment_var, y=Ideology)) + geom_point() + geom_line(aes(y=fitted))
+# Referenced an online ggplot tutorial to create the plot and use the predict function
+# Citation
+# "Introduction to R Graphics with Ggplot2." Harvad.edu. Harvard University, n.d. Web. 3 June 2017. <http://tutorials.iq.harvard.edu/R/Rgraphics/Rgraphics.html>.
+# Also referenced R documentation while figuring out how to work with the predict function
+# Citation
+# "Predict Method for Linear Model Fits." R Documentation. N.p., n.d. Web. 4 June 2017. <https://stat.ethz.ch/R-manual/R-devel/library/stats/html/predict.lm.html>. [Package stats version 3.4.0 Index]
+```
+
+### Democrat with GOP2party2010 = 0
+The fitted value for a democrat with GOP2party2010=0 is -.58.
+
+```{r}
+ -0.31327 - (.5 * 0.52861)
+# [1] -0.577575
+```
+
+### Democrat with GOP2party2010=.5
+The value is given by our regression. It is the coefficient on beta-knot, approximately -0.31.
+
+### Republican with GOP2party2010=.5
+The value is also given by our regression. It is the coefficient on beta-knot + the coefficient on GOPwin2010, approximately .67. 
+```{r}
+-0.31327 + 0.98157
+# [1] 0.6683
+```
+
+### Republican with GOPparty2010=1
+We can calculate the value similarly to how we calculated the fitted ideology score for a democrat where GOP2party2010=0. The ideology score for a republican where GOP2party2010=1 is about .69.
+```{r}
+0.6683 + (.5 * (0.52861 - 0.48933))
+# [1] 0.68794
+```
+
+## Problem G
+The equation is now:
+$$
+\text{Ideology} = \beta_0 + \beta_{1}\text{GOPwin2010}_i + \beta_{2}\text{(GOP2party2010}_i) + \beta_3\text{(GOP2party2010}_i)\text{GOPwin2010}_i +  \epsilon_i
+$$
+```{r}
+diff_slopes2 <- lm(Ideology ~ GOPwin2010 + GOP2party2010 + GOP2party2010*GOPwin2010, data=congress_data)
+summary(diff_slopes2)
+```
+Both of the slope coefficients remain unchanged, as is to be expected. Both of the intercept coefficients are higher, which makes sense because each data point in our assignment variable is .5 higher in this model compared to the previous model.
+
+```{r}
+# nulls deleted
+congress_data <- na.omit(congress_data)
+congress_data$fitted <- predict(diff_slopes2)
+ggplot(congress_data, aes(x=GOP2party2010, y=Ideology)) + geom_point() + geom_line(aes(y=fitted))
+# Referenced an online ggplot tutorial to create the plot and use the predict function
+# Citation
+# "Introduction to R Graphics with Ggplot2." Harvad.edu. Harvard University, n.d. Web. 3 June 2017. <http://tutorials.iq.harvard.edu/R/Rgraphics/Rgraphics.html>.
+# Also referenced R documentation while figuring out how to work with the predict function
+# Citation
+# "Predict Method for Linear Model Fits." R Documentation. N.p., n.d. Web. 4 June 2017. <https://stat.ethz.ch/R-manual/R-devel/library/stats/html/predict.lm.html>. [Package stats version 3.4.0 Index]
+```
+
+### Democrat with GOP2party2010 = 0
+The fitted value for a democrat with GOP2party2010=0 is -0.841885.
+
+```{r}
+ -0.57758 - (.5 * 0.52861)
+# [1] -0.841885
+```
+
+### Democrat with GOP2party2010=.5
+The value is given by our regression. It is the coefficient on beta-knot, approximately -0.58.
+
+### Republican with GOP2party2010=.5
+The value is also given by our regression. It is the coefficient on beta-knot + the coefficient on GOPwin2010, approximately .65. 
+```{r}
+-0.57758 + 1.2262
+# [1] 0.64862
+```
+
+### Republican with GOPparty2010=1
+We can calculate the value similarly to how we calculated the fitted ideology score for a democrat where GOP2party2010=0. The ideology score for a republican where GOP2party2010=1 is about .67.
+```{r}
+0.64862 + (.5 * (0.52861 - 0.48933))
+# [1] 0.66826
+```
+
+The fitted values are very similar to the fitted values from part F for republicans. They are quite a bit lower for democrats in part G versus part F. I would guess that the values are more similar for Republicans than for Democrats in parts F and G because the slope for Republicans is much lower than the slope for Democrats, so changing the GOP2party2010 values has less of an effect on the Republican fitted values than on the Democrat fitted values.
+
+## Problem H
