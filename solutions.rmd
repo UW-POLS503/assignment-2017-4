@@ -467,6 +467,6 @@ bikedata$weekend_rho <- bikedata$weekend - Rho_hat*lag_weeekend
 
 summary(lm(trips_rho~lowtemp_rho + weekend_rho, data=bikedata))
 ```
-I'm not sure why my coefficients are a bit lower than my coefficients from the first regression. I don't think they should be, since autocorrelation does not bias beta coefficients. Rather, the autocorrelation corrected model should have the same coefficients, but wider confidence intervals (we do see wider confidence intervals in the autocorrelation corrected model). Maybe the fact that I didn't actually see any autocorrelation in Part A is the cause of the surprising results.
+The coefficient on lowtemp_rho is a bit lower than the corresponding coefficient in the first regression. Baily notes that it is ok that the coefficient in the rho transformed model is different than the coefficient in the original OLS (both are still not subject to bias). The standard error on the low temperature coefficient is larger in the part b regression than in the part a regression (24.85 vs 22.78, respectively).
 
-# Problem 
+# Problem 15.1
