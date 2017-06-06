@@ -479,11 +479,12 @@ olympicsdata <- read.csv("Ch15.Ex1&Ex2.OlympicsData/olympics_HW.csv")
 OneA <- lm(medals ~ population + GDP + host + temp + elevation + factor(country), data=olympicsdata)
 summary(OneA)
 ```
-For each one unit increase in temp, there is a corresponding -.00003 decrease in the conditional mean of medals. For each one unit increase in elevation, there is a corresponding .0001 increase in the conditional mean of medals. Including a fixed effect on country allows for country-specific variables that do not change over time to be controlled for.
+For each one unit increase in temp, there is a corresponding -.00003 decrease in the conditional mean of medals. For each one unit increase in elevation, there is a corresponding .0001 increase in the conditional mean of medals. Neither coefficient is significant. Including a fixed effect on country allows for country-specific variables that do not change over time to be controlled for.
 
 ## Problem B
 ```{r}
 OneB <- lm(medals ~ population + GDP + host + factor(year) + factor(country), data=olympicsdata)
+# ^Bailey recommends using the plm command, but this yields the same results
 summary(OneB)
 ```
 The coefficients on temp and elevation both flipped, but are still quite small and neither is statistically significant in either regression. Including fixed effects on year now controls for period effects that affect the number of medals in a given time period.
@@ -492,11 +493,9 @@ The coefficients on temp and elevation both flipped, but are still quite small a
 ```{r}
 # using data from Bailey's chapter 15 computing corner
 olympicsdata$residuals <- rep(NA, nrow(olympicsdata))
-olympicsdata$residuals[as.numeric(names(Oneb$residuals))] = OneB$residuals
+olympicsdata$residuals[as.numeric(names(OneB$residuals))] = OneB$residuals
 olympicsdata$LagID <- c(NA, olympicsdata$ID[1:nrow(olympicsdata)-1])
 olympicsdata$LagResiduals <- c(NA, olympicsdata$residuals[1:nrow(olympicsdata)-1])
-olympicsdata$LagResiduals[LagID != ID] = NA
-olympicsdata$LagResiduals[olympicsdata$LagID != ID] = NA
 olympicsdata$LagResiduals[olympicsdata$LagID != olympicsdata$ID] = NA
 RhoHat<-lm(residuals~LagResiduals, data=olympicsdata)
 summary(RhoHat)
@@ -512,23 +511,24 @@ olympicsdata$LagPopulation <- c(NA, olympicsdata$population[1:nrow(olympicsdata)
 olympicsdata$LagGDP <- c(NA, olympicsdata$GDP[1:nrow(olympicsdata)-1])
 olympicsdata$LagHost <- c(NA, olympicsdata$host[1:nrow(olympicsdata)-1])
 
+# I couldn't get Bailey's code to work properly, but I think my code below sill gets the right answer (it just drops data where LagID and ID are not equal)
 # create rho transformed variables
-olympicsdata$medals_rho <- rep(NA, length(olympicsdata$medals))
-olympicsdata$population_rho <- rep(NA, nrow(olympicsdata))
-olympicsdata$gdp_rho <- rep(NA, nrow(olympicsdata))
-olympicsdata$host_rho <- rep(NA, nrow(olympicsdata))
+# olympicsdata$medals_rho <- rep(NA, length(olympicsdata$medals))
+#olympicsdata$population_rho <- rep(NA, nrow(olympicsdata))
+# olympicsdata$gdp_rho <- rep(NA, nrow(olympicsdata))
+# olympicsdata$host_rho <- rep(NA, nrow(olympicsdata))
 
 # fill rho
 medals_rho <- (olympicsdata$medals[olympicsdata$LagID==olympicsdata$ID] - RhoHat$coefficients[2]*olympicsdata$LagMedals[olympicsdata$LagID==olympicsdata$ID])
-population_rho <- (olympicsdata$population[olympicsdata$LagID==olympicsdata$ID] - RhoHat$coefficients[2]*olympicsdata$population[olympicsdata$LagID==olympicsdata$ID])
-gdp_rho <- (olympicsdata$GDP[olympicsdata$LagID==olympicsdata$ID] - RhoHat$coefficients[2]*olympicsdata$GDP[olympicsdata$LagID==olympicsdata$ID])
-host_rho <- (olympicsdata$host[olympicsdata$LagID==olympicsdata$ID] - RhoHat$coefficients[2]*olympicsdata$host[olympicsdata$LagID==olympicsdata$ID])
+population_rho <- (olympicsdata$population[olympicsdata$LagID==olympicsdata$ID] - RhoHat$coefficients[2]*olympicsdata$LagPopulation[olympicsdata$LagID==olympicsdata$ID])
+gdp_rho <- (olympicsdata$GDP[olympicsdata$LagID==olympicsdata$ID] - RhoHat$coefficients[2]*olympicsdata$LagGDP[olympicsdata$LagID==olympicsdata$ID])
+host_rho <- (olympicsdata$host[olympicsdata$LagID==olympicsdata$ID] - RhoHat$coefficients[2]*olympicsdata$LagHost[olympicsdata$LagID==olympicsdata$ID])
 countries <- (olympicsdata$country[olympicsdata$LagID==olympicsdata$ID])
 years <- (olympicsdata$year[olympicsdata$LagID==olympicsdata$ID])
 
 summary(lm(medals_rho~population_rho + gdp_rho + host_rho + factor(countries) + factor(years)))
 ```
-The standard errors on host and population are higher in the autocorrelation deleted models. The coefficients are actually quite a bit higher as well. The autocorrelation corrected model has its advantages, namely that it does not underestimate uncertainty. The benefit of the model in 2B is that we do not need to include logged data, so we have more data points. Overall I think the the autocorrelation corrected model is better since, as show in 1c, autocorrelation is present in the data.
+The standard errors on GDP and population are higher in the autocorrelation deleted models. Surprisingly, the standard error on host is lower in the autocorrelation deleted model.  The coefficients on all three variables are higher in the autocorrelation corrected model. The autocorrelation corrected model has its advantages, namely that it does not underestimate uncertainty. The benefit of the model in 2B is that we do not need to include logged data, so we have more data points. Overall I think the the autocorrelation corrected model is better since, as show in 1c, autocorrelation is present in the data.
 
 ## Problem E
 ```{r}
@@ -551,29 +551,30 @@ olympicsdata$LagGDP <- c(NA, olympicsdata$GDP[1:nrow(olympicsdata)-1])
 olympicsdata$LagHost <- c(NA, olympicsdata$host[1:nrow(olympicsdata)-1])
 
 # create rho transformed variables
-olympicsdata$medals_rho <- rep(NA, length(olympicsdata$medals))
-olympicsdata$population_rho <- rep(NA, nrow(olympicsdata))
-olympicsdata$gdp_rho <- rep(NA, nrow(olympicsdata))
-olympicsdata$host_rho <- rep(NA, nrow(olympicsdata))
+# olympicsdata$medals_rho <- rep(NA, length(olympicsdata$medals))
+# olympicsdata$population_rho <- rep(NA, nrow(olympicsdata))
+# olympicsdata$gdp_rho <- rep(NA, nrow(olympicsdata))
+# olympicsdata$host_rho <- rep(NA, nrow(olympicsdata))
 
 # fill rho
 medals_rho <- (olympicsdata$medals[olympicsdata$LagID==olympicsdata$ID] - RhoHat$coefficients[2]*olympicsdata$LagMedals[olympicsdata$LagID==olympicsdata$ID])
-population_rho <- (olympicsdata$population[olympicsdata$LagID==olympicsdata$ID] - RhoHat$coefficients[2]*olympicsdata$population[olympicsdata$LagID==olympicsdata$ID])
-gdp_rho <- (olympicsdata$GDP[olympicsdata$LagID==olympicsdata$ID] - RhoHat$coefficients[2]*olympicsdata$GDP[olympicsdata$LagID==olympicsdata$ID])
-host_rho <- (olympicsdata$host[olympicsdata$LagID==olympicsdata$ID] - RhoHat$coefficients[2]*olympicsdata$host[olympicsdata$LagID==olympicsdata$ID])
-lag_medals_rho <- (olympicsdata$LagMedals[olympicsdata$LagID==olympicsdata$ID] - RhoHat$coefficients[2]*olympicsdata$LagMedals[olympicsdata$LagID==olympicsdata$ID])
+population_rho <- (olympicsdata$population[olympicsdata$LagID==olympicsdata$ID] - RhoHat$coefficients[2]*olympicsdata$LagPopulation[olympicsdata$LagID==olympicsdata$ID])
+gdp_rho <- (olympicsdata$GDP[olympicsdata$LagID==olympicsdata$ID] - RhoHat$coefficients[2]*olympicsdata$LagGDP[olympicsdata$LagID==olympicsdata$ID])
+host_rho <- (olympicsdata$host[olympicsdata$LagID==olympicsdata$ID] - RhoHat$coefficients[2]*olympicsdata$LagHost[olympicsdata$LagID==olympicsdata$ID])
 countries <- (olympicsdata$country[olympicsdata$LagID==olympicsdata$ID])
 years <- (olympicsdata$year[olympicsdata$LagID==olympicsdata$ID])
 
-summary(lm(medals_rho~population_rho + gdp_rho + host_rho + lag_medals_rho + factor(countries) + factor(years)))
+summary(lm(medals_rho~ lag(medals_rho) + population_rho + gdp_rho + host_rho + factor(countries) + factor(years)))
 ```
-The coefficients on host and population are much closer betwen part g and d than part g and part e. The coefficient on gdp is pretty similar in all three cases.
+The coefficients on all three variables are quite a bit smaller in part g than in both of the other models. I was a bit confused by this at first. Bailey notes that using a dynamic model when there are correlated errors can cause the coefficients to become nullified (since the lagged dependent variable will do such a good job of explaining the dependent variable). The results in part G show that the significance of population, gdp, and host are much lower, but I would not have expected this to be the case since rho-deletion should have gotten rid of the error. The coefficients are certainly biased since the model includes both fixed effects and a lagged Y, so perhaps that bias is what caused the coefficients on host, GDP, and population to change so much.
+
+However, I think the most likely cause is that lag(medals_rho) was an omitted variable before. I think that the lagged count of medals is probably a far better predictor than GDP, host, and population, so it makes sense that those coefficients are basically 0 when we include lagged medals in the model.
 
 ## Problem H
 The T parameter (the number of years of data we have for each country) indicates how biased our coefficients will be (higher T means less bias). In this case, T = 10.
 
 ## Probem I
-I think the dynamic model is more useful in this case. I would expect that the number of medals earned by a country in the last olympics is highly indicative of how many they will win the next time for myriad reasons. If we had more variables to include on the right side of the equation, perhapds we would not need to use a dynamic model, but in absence of a lot of omitted variables, I think the dynamic model is something that we should strive to estimate. Furthermore, even though we're worried about bias, we have 10 data points per country, which is not negligible, so perhaps bias isn't a huge issue for us in this case.
+I think the dynamic model is more useful in this case. I would expect that the number of medals earned by a country in the last olympics is highly indicative of how many they will win the next time for myriad reasons, so we should include lagged medals on the right hand side of our equation. Even though we're worried about bias, we have 10 data points per country, which is not negligible, so perhaps bias isn't a huge issue for us in this case.
 
 ## Problem J
-The models with more data (i.e. those that do not include logged variables) are likely to be more robust in my opinion. That's because each individual data point should hold less weight, all else being equal, if it is in a dataset that has many points as opposed to fewer points.
+The models with more data (i.e. those that do not include lagged variables) are likely to be more robust in my opinion. That's because each individual data point should hold less weight, all else being equal, if it is in a dataset that has many points as opposed to fewer points. However, I think we have enough data in either case that robustness shouldn't be a major concern.
