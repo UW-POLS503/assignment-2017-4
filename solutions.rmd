@@ -436,4 +436,37 @@ ggplot(headstart_window, aes(x=Bin, y=BinMean)) + geom_point() + geom_smooth(aes
 ```
 I used the FittedQuadratic values that were already included in the dataset. The curve seems to show that mortality is lowest where bin=.25 and highest around bin=-.3 and bin=.8. I'm honestly not sure what to make of these results, since they seem to indicate that the poorest neighborhoods have a lower mortality than the least poor neighborhoods. My guess is that that there is an underlying data issue (e.g. small sample size).
 
+# Problem 13.3
+```{r}
+bikedata <- read.csv("Ch13.Ex1.BikeShareData/BikeShare.csv")
+```
 
+## Problem A
+```{r}
+# using code from Bailey's Chapter 13 computing corner
+OneA <- lm(trips ~ lowtemp + weekend, data=bikedata)
+summary(OneA)
+Errors <- resid(OneA)
+LagErrors<- c(NA, Errors[1:(length(Errors)-1)])
+AuxReg <- lm(Errors ~ LagErrors)
+summary(AuxReg)
+```
+Since the coefficient on LagErrors is not statistically significant, we cannot say that there is autocorrelation in the data.
+
+## Problem B
+```{r}
+# using code from Bailey's Chapter 13 computing corner
+Rho_hat <- summary(AuxReg)$coefficients[2]
+bikedata$lag_lowtemp <- c(NA, bikedata$lowtemp[1:nrow(bikedata) -1])
+bikedata$lag_trips <- c(NA, bikedata$trips[1:nrow(bikedata) -1])
+bikedata$lag_weeekend <- c(NA, bikedata$weekend[1:nrow(bikedata) -1])
+
+bikedata$lowtemp_rho <- bikedata$lowtemp - Rho_hat*lag_lowtemp
+bikedata$trips_rho <- bikedata$trips - Rho_hat*lag_trips
+bikedata$weekend_rho <- bikedata$weekend - Rho_hat*lag_weeekend
+
+summary(lm(trips_rho~lowtemp_rho + weekend_rho, data=bikedata))
+```
+I'm not sure why my coefficients are a bit lower than my coefficients from the first regression. I don't think they should be, since autocorrelation does not bias beta coefficients. Rather, the autocorrelation corrected model should have the same coefficients, but wider confidence intervals (we do see wider confidence intervals in the autocorrelation corrected model). Maybe the fact that I didn't actually see any autocorrelation in Part A is the cause of the surprising results.
+
+# Problem 
