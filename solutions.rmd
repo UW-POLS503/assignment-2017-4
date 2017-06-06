@@ -531,3 +531,49 @@ summary(lm(medals_rho~population_rho + gdp_rho + host_rho + factor(countries) + 
 The standard errors on host and population are higher in the autocorrelation deleted models. The coefficients are actually quite a bit higher as well. The autocorrelation corrected model has its advantages, namely that it does not underestimate uncertainty. The benefit of the model in 2B is that we do not need to include logged data, so we have more data points. Overall I think the the autocorrelation corrected model is better since, as show in 1c, autocorrelation is present in the data.
 
 ## Problem E
+```{r}
+# using code from Bailey's chapter 15 computing corner
+library(plm)
+summary(plm(medals~lag(medals) + population + GDP + host, data=olympicsdata, index=c("year", "country"), effect="twoways"))
+```
+The new model is dynamic, meaning that a lag(medals) argument is included on the right hand side now. The dynamic model produces biased coefficients, whereas the fixed effects model does not. Specificially, fixed effects and dynamic models are biased because the lagged dependent variable is endogenous. Even though bias is present, the coefficients on host and population actually are not that different across the models. Perhaps that's because we have a good amount of data; Bailey notes that the bias is inversely correlated with data quantity. The coefficients are also different across models because the coefficient in the dynamic model affects Y in the current and next time period.
+
+## Problem F
+There is! Bailey notes that dynamic models that do not include fixed effets are biased if the errors are correlated. I believe that this also applies to fixed effects, dynamic models. Since part c shows that errors are correlated, we may not want to use dynamic models here. Section 13.5 of Real Stats discusses how autocorrelated errors will cause bias in a dynamic model, while it will not in OLS, making the OLS model seem more attractive in this case.
+
+## Problem G
+```{r}
+# Used code from Bailey's Chapter 15 compute corner
+# create lag variables
+olympicsdata$LagMedals <- c(NA, olympicsdata$medals[1:nrow(olympicsdata)-1])
+olympicsdata$LagPopulation <- c(NA, olympicsdata$population[1:nrow(olympicsdata)-1])
+olympicsdata$LagGDP <- c(NA, olympicsdata$GDP[1:nrow(olympicsdata)-1])
+olympicsdata$LagHost <- c(NA, olympicsdata$host[1:nrow(olympicsdata)-1])
+
+# create rho transformed variables
+olympicsdata$medals_rho <- rep(NA, length(olympicsdata$medals))
+olympicsdata$population_rho <- rep(NA, nrow(olympicsdata))
+olympicsdata$gdp_rho <- rep(NA, nrow(olympicsdata))
+olympicsdata$host_rho <- rep(NA, nrow(olympicsdata))
+
+# fill rho
+medals_rho <- (olympicsdata$medals[olympicsdata$LagID==olympicsdata$ID] - RhoHat$coefficients[2]*olympicsdata$LagMedals[olympicsdata$LagID==olympicsdata$ID])
+population_rho <- (olympicsdata$population[olympicsdata$LagID==olympicsdata$ID] - RhoHat$coefficients[2]*olympicsdata$population[olympicsdata$LagID==olympicsdata$ID])
+gdp_rho <- (olympicsdata$GDP[olympicsdata$LagID==olympicsdata$ID] - RhoHat$coefficients[2]*olympicsdata$GDP[olympicsdata$LagID==olympicsdata$ID])
+host_rho <- (olympicsdata$host[olympicsdata$LagID==olympicsdata$ID] - RhoHat$coefficients[2]*olympicsdata$host[olympicsdata$LagID==olympicsdata$ID])
+lag_medals_rho <- (olympicsdata$LagMedals[olympicsdata$LagID==olympicsdata$ID] - RhoHat$coefficients[2]*olympicsdata$LagMedals[olympicsdata$LagID==olympicsdata$ID])
+countries <- (olympicsdata$country[olympicsdata$LagID==olympicsdata$ID])
+years <- (olympicsdata$year[olympicsdata$LagID==olympicsdata$ID])
+
+summary(lm(medals_rho~population_rho + gdp_rho + host_rho + lag_medals_rho + factor(countries) + factor(years)))
+```
+The coefficients on host and population are much closer betwen part g and d than part g and part e. The coefficient on gdp is pretty similar in all three cases.
+
+## Problem H
+The T parameter (the number of years of data we have for each country) indicates how biased our coefficients will be (higher T means less bias). In this case, T = 10.
+
+## Probem I
+I think the dynamic model is more useful in this case. I would expect that the number of medals earned by a country in the last olympics is highly indicative of how many they will win the next time for myriad reasons. If we had more variables to include on the right side of the equation, perhapds we would not need to use a dynamic model, but in absence of a lot of omitted variables, I think the dynamic model is something that we should strive to estimate. Furthermore, even though we're worried about bias, we have 10 data points per country, which is not negligible, so perhaps bias isn't a huge issue for us in this case.
+
+## Problem J
+The models with more data (i.e. those that do not include logged variables) are likely to be more robust in my opinion. That's because each individual data point should hold less weight, all else being equal, if it is in a dataset that has many points as opposed to fewer points.
