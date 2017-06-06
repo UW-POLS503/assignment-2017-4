@@ -470,3 +470,64 @@ summary(lm(trips_rho~lowtemp_rho + weekend_rho, data=bikedata))
 The coefficient on lowtemp_rho is a bit lower than the corresponding coefficient in the first regression. Baily notes that it is ok that the coefficient in the rho transformed model is different than the coefficient in the original OLS (both are still not subject to bias). The standard error on the low temperature coefficient is larger in the part b regression than in the part a regression (24.85 vs 22.78, respectively).
 
 # Problem 15.1
+```{r}
+olympicsdata <- read.csv("Ch15.Ex1&Ex2.OlympicsData/olympics_HW.csv")
+```
+
+## Problem A
+```{r}
+OneA <- lm(medals ~ population + GDP + host + temp + elevation + factor(country), data=olympicsdata)
+summary(OneA)
+```
+For each one unit increase in temp, there is a corresponding -.00003 decrease in the conditional mean of medals. For each one unit increase in elevation, there is a corresponding .0001 increase in the conditional mean of medals. Including a fixed effect on country allows for country-specific variables that do not change over time to be controlled for.
+
+## Problem B
+```{r}
+OneB <- lm(medals ~ population + GDP + host + factor(year) + factor(country), data=olympicsdata)
+summary(OneB)
+```
+The coefficients on temp and elevation both flipped, but are still quite small and neither is statistically significant in either regression. Including fixed effects on year now controls for period effects that affect the number of medals in a given time period.
+
+## Problem C
+```{r}
+# using data from Bailey's chapter 15 computing corner
+olympicsdata$residuals <- rep(NA, nrow(olympicsdata))
+olympicsdata$residuals[as.numeric(names(Oneb$residuals))] = OneB$residuals
+olympicsdata$LagID <- c(NA, olympicsdata$ID[1:nrow(olympicsdata)-1])
+olympicsdata$LagResiduals <- c(NA, olympicsdata$residuals[1:nrow(olympicsdata)-1])
+olympicsdata$LagResiduals[LagID != ID] = NA
+olympicsdata$LagResiduals[olympicsdata$LagID != ID] = NA
+olympicsdata$LagResiduals[olympicsdata$LagID != olympicsdata$ID] = NA
+RhoHat<-lm(residuals~LagResiduals, data=olympicsdata)
+summary(RhoHat)
+```
+The coefficient on LagResiduals is highly statistically significant, so there does appear to be autocorrelation.
+
+## Prolem D
+```{r}
+# Used code from Bailey's Chapter 15 compute corner
+# create lag variables
+olympicsdata$LagMedals <- c(NA, olympicsdata$medals[1:nrow(olympicsdata)-1])
+olympicsdata$LagPopulation <- c(NA, olympicsdata$population[1:nrow(olympicsdata)-1])
+olympicsdata$LagGDP <- c(NA, olympicsdata$GDP[1:nrow(olympicsdata)-1])
+olympicsdata$LagHost <- c(NA, olympicsdata$host[1:nrow(olympicsdata)-1])
+
+# create rho transformed variables
+olympicsdata$medals_rho <- rep(NA, length(olympicsdata$medals))
+olympicsdata$population_rho <- rep(NA, nrow(olympicsdata))
+olympicsdata$gdp_rho <- rep(NA, nrow(olympicsdata))
+olympicsdata$host_rho <- rep(NA, nrow(olympicsdata))
+
+# fill rho
+medals_rho <- (olympicsdata$medals[olympicsdata$LagID==olympicsdata$ID] - RhoHat$coefficients[2]*olympicsdata$LagMedals[olympicsdata$LagID==olympicsdata$ID])
+population_rho <- (olympicsdata$population[olympicsdata$LagID==olympicsdata$ID] - RhoHat$coefficients[2]*olympicsdata$population[olympicsdata$LagID==olympicsdata$ID])
+gdp_rho <- (olympicsdata$GDP[olympicsdata$LagID==olympicsdata$ID] - RhoHat$coefficients[2]*olympicsdata$GDP[olympicsdata$LagID==olympicsdata$ID])
+host_rho <- (olympicsdata$host[olympicsdata$LagID==olympicsdata$ID] - RhoHat$coefficients[2]*olympicsdata$host[olympicsdata$LagID==olympicsdata$ID])
+countries <- (olympicsdata$country[olympicsdata$LagID==olympicsdata$ID])
+years <- (olympicsdata$year[olympicsdata$LagID==olympicsdata$ID])
+
+summary(lm(medals_rho~population_rho + gdp_rho + host_rho + factor(countries) + factor(years)))
+```
+The standard errors on host and population are higher in the autocorrelation deleted models. The coefficients are actually quite a bit higher as well. The autocorrelation corrected model has its advantages, namely that it does not underestimate uncertainty. The benefit of the model in 2B is that we do not need to include logged data, so we have more data points. Overall I think the the autocorrelation corrected model is better since, as show in 1c, autocorrelation is present in the data.
+
+## Problem E
