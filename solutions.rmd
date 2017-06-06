@@ -161,7 +161,7 @@ The assignment variable is GOP2party2010. The treatment variable is a Republican
 The most basic RD model would entail keeping the slopes of the regression lines the same across the discontinuity. The following formula would describe such a relationship:
 
 $$
-\text{Ideology} = \beta_0 + \beta_{1}\text{GOPwin2010}_i + \beta_{2}\text{(GOP2party2010}_i) + \epsilon_i
+\text{Ideology} = \beta_0 + \beta_{1}\text{GOPwin2010}_i + \beta_{2}\text{GOP2party2010}_i + \epsilon_i
 $$
 Beta-knot is the intercept for the first line; that is where the non-treatment group regression line crosses the y-axis. Beta1 is the difference between the intercept of the non-treatment group regression line and the treatment group regression line. Beta2 is the slope paratmeter for each line.
 
@@ -321,7 +321,7 @@ The coefficient on GOPwin2010 is about 1.05, meaning that the mean Ideology is a
 
 ## Problem K
 ```{r}
-congress_data$squared_int <- (congress_data$GOP2party2010 + congress_data$GOP2party2010) ^2
+congress_data$squared_int <- (congress_data$GOP2party2010*GOPwin2010) ^2
 quad <- lm(Ideology ~ GOPwin2010 + GOP2party2010 + GOP2party2010 + GOP2party2010*GOPwin2010 + squared_int + ChildPoverty + MedianIncome + Obama2008 + WhitePct, data=congress_data)
 # Citation: Bailey's Chapter 7 Computing Corner. Referenced the Chapter 7 computing corner to figure out how to make a quadratic term
 summary(quad)
@@ -345,3 +345,95 @@ The model in part l is the most credible. There are a good number of data points
 
 
 # Problem 11.4
+```{r}
+headstart <- read.csv("Ch11.Ex4.HeadStartNationalData/LudwigMiller_head_start.csv")
+```
+
+## Problem A
+The equation is:
+$$
+\text{Mortality} = \beta_0 + \beta_{1}\text{Headsart}_i + \beta_{2}\text{Poverty}_i + \epsilon_i
+$$
+As opoposed to drawing, I will explain what I think the graph will look like. I would assume that counties where the poverty level is slightly below 59.2% would have slightly lower mortality rates than areas where the poverty level is slightly above 59.2%. I would expect that the slope will be positive non-linear to the left of the cutoff, where increasing income leads to a decrease in mortality. I would expect the data to the left of the cutoff to exhibit diminishing marginal returns to health as income increases. To the right of the cutoff, I would expect for the line to be non-linear, since there are diminishing marginal returns to mortality as wealth increases significantly (e.g. people that make 100,000 dollars per year are not likely to be significantly less healthy than people that make 150,000 dollars per year, whereas I would expect that someone who makes 50,000 dollars per year is significantly healthier than someone who makes 0 dollars per year).
+
+## Problem B
+Regression discontinuity can help explain causation since including the assignment variable on the right side of the equation can ensure that the coefficient on the treatment variables is exogenous.
+
+## Problem C
+```{r}
+FourC <- lm(Mortality ~ HeadStart + Poverty, data=headstart)
+summary(FourC)
+```
+The coefficient on HeadStart indicates that the mean mortality rate is .9131 lower at the discontinuity for the treated group, indicating that HeadStart may have some beneficial impact on mortality.
+
+## Probem D
+```{r}
+FourD <- lm(Mortality ~ HeadStart + Poverty + HeadStart*Poverty, data=headstart)
+summary(FourD)
+```
+The coefficient on the interaction term indicates that the slope on the regression line in the treated group is .18 higher than the slope of the regression line in the non-treated group. The coefficient on HeadStart is similar in the simple and varying slopes models (-1.02678 and -0.91310, respectively).
+
+## Problem E
+```{r}
+headstart_window <- subset(headstart, Poverty > -.8)
+headstart_window <- subset(headstart_window, Poverty < .8)
+# referenced documentation on subset -- http://www.and statmethods.net/management/subset.html -- to write the code to subset congress_data
+# Citation: "Subsetting Data." Quick - R. Robert I. Kabacoff, Ph.D., n.d. Web. 3 June 2017. <http://www.statmethods.net/management/subset.html>.
+FourE <- lm(Mortality ~ HeadStart + Poverty, data=headstart_window)
+summary(FourE)
+```
+The smaller model using the smaller window seems to indicate an even larger benefit conferred (a -2.1035 reduction in mortality at the cut point).
+
+## Problem F
+```{r}
+quad <- lm(Mortality ~ HeadStart + Poverty + HeadStart*Poverty + I((HeadStart*Poverty)^2), data=headstart)
+# Citation: Bailey's Chapter 7 Computing Corner. Referenced the Chapter 7 computing corner to figure out how to make a quadratic term
+summary(quad)
+```
+
+## Problem G
+```{r}
+ggplot(headstart, aes(x=Poverty, y=Mortality)) + geom_point()
+# Referenced an online ggplot tutorial to create the plot
+# Citation
+# "Introduction to R Graphics with Ggplot2." Harvad.edu. Harvard University, n.d. Web. 3 June 2017. <http://tutorials.iq.harvard.edu/R/Rgraphics/Rgraphics.html>.
+# Also referenced a Stack Overflow Post in creating this plot
+# Reference
+# "Label Points in Geom_point." Stack Overflow. Stack Exchange Inc., n.d. Web. 3 June 2017. <https://stackoverflow.com/questions/15624656/label-points-in-geom-point>. Referenced the answer by username "agstudy" on (answer was edited by username "micstr" on July 31, 2016)
+```
+```{r}
+ggplot(headstart_window, aes(x=Poverty, y=Mortality)) + geom_point()
+# Referenced an online ggplot tutorial to create the plot
+# Citation
+# "Introduction to R Graphics with Ggplot2." Harvad.edu. Harvard University, n.d. Web. 3 June 2017. <http://tutorials.iq.harvard.edu/R/Rgraphics/Rgraphics.html>.
+# Also referenced a Stack Overflow Post in creating this plot
+# Reference
+# "Label Points in Geom_point." Stack Overflow. Stack Exchange Inc., n.d. Web. 3 June 2017. <https://stackoverflow.com/questions/15624656/label-points-in-geom-point>. Referenced the answer by username "agstudy" on (answer was edited by username "micstr" on July 31, 2016)
+```
+I do not see a discernible discontinuity when I look at the full dataset or at the smaller window (where we only look at points where poverty is greater than -.8 or less than .8).
+
+## Problem H
+```{r}
+ggplot(headstart_window, aes(x=Bin, y=BinMean)) + geom_point()
+# Referenced an online ggplot tutorial to create the plot
+# Citation
+# "Introduction to R Graphics with Ggplot2." Harvad.edu. Harvard University, n.d. Web. 3 June 2017. <http://tutorials.iq.harvard.edu/R/Rgraphics/Rgraphics.html>.
+# Also referenced a Stack Overflow Post in creating this plot
+# Reference
+# "Label Points in Geom_point." Stack Overflow. Stack Exchange Inc., n.d. Web. 3 June 2017. <https://stackoverflow.com/questions/15624656/label-points-in-geom-point>. Referenced the answer by username "agstudy" on (answer was edited by username "micstr" on July 31, 2016)
+```
+Binning is often useful to idenfy a discontinuity. I think our bins might be too large in this case, but they seem to show the opposite of what I would have expected; the graph shows that the mortality rate is higher just to the left of the discontinuity compared to just the right of the discontinuity.
+
+## Problem I
+```{r}
+ggplot(headstart_window, aes(x=Bin, y=BinMean)) + geom_point() + geom_smooth(aes(y=FittedQuadratic))
+# Referenced an online ggplot tutorial to create the plot and use the predict function
+# Citation
+# "Introduction to R Graphics with Ggplot2." Harvad.edu. Harvard University, n.d. Web. 3 June 2017. <http://tutorials.iq.harvard.edu/R/Rgraphics/Rgraphics.html>.
+# Also referenced R documentation while figuring out how to work with the predict function
+# Citation
+# "Predict Method for Linear Model Fits." R Documentation. N.p., n.d. Web. 4 June 2017. <https://stat.ethz.ch/R-manual/R-devel/library/stats/html/predict.lm.html>. [Package stats version 3.4.0 Index]
+```
+I used the FittedQuadratic values that were already included in the dataset. The curve seems to show that mortality is lowest where bin=.25 and highest around bin=-.3 and bin=.8. I'm honestly not sure what to make of these results, since they seem to indicate that the poorest neighborhoods have a lower mortality than the least poor neighborhoods. My guess is that that there is an underlying data issue (e.g. small sample size).
+
+
