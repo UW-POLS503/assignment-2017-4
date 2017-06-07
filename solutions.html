@@ -3979,7 +3979,7 @@ summary(RhoHat)</code></pre>
 ##   (279 observations deleted due to missingness)
 ## Multiple R-squared:  0.2666, Adjusted R-squared:  0.2657 
 ## F-statistic: 305.7 on 1 and 841 DF,  p-value: &lt; 2.2e-16</code></pre>
-<p>The coefficient on LagResiduals is highly statistically significant, so there does appear to be autocorrelation.</p>
+<p>The coefficient on LagResiduals is highly statistically significant, so there does appear to be autocorrelation. Autocorrelation will not bias our coefficients but does mean that we are underestimating our standard errors.</p>
 </div>
 <div id="prolem-d" class="section level2">
 <h2>Prolem D</h2>
@@ -4305,7 +4305,31 @@ summary(plm(medals~lag(medals) + population + GDP + host, data=olympicsdata, ind
 </div>
 <div id="problem-f-4" class="section level2">
 <h2>Problem F</h2>
-<p>There is! Bailey notes that dynamic models that do not include fixed effets are biased if the errors are correlated. I believe that this also applies to fixed effects, dynamic models. Since part c shows that errors are correlated, we may not want to use dynamic models here. Section 13.5 of Real Stats discusses how autocorrelated errors will cause bias in a dynamic model, while it will not in OLS, making the OLS model seem more attractive in this case.</p>
+<pre class="r"><code>library(plm)
+residuals &lt;- as.numeric(names((plm(medals~lag(medals) + population + GDP + host, data=olympicsdata, index=c(&quot;year&quot;, &quot;country&quot;), effect=&quot;twoways&quot;)$residuals)))
+lagresiduals &lt;- c(NA, residuals[1:length(residuals)-1])
+RhoHat&lt;-lm(residuals~lagresiduals)
+summary(RhoHat)</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = residuals ~ lagresiduals)
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -0.4448 -0.2884 -0.1813 -0.0731  3.5854 
+## 
+## Coefficients:
+##               Estimate Std. Error  t value Pr(&gt;|t|)    
+## (Intercept)  1.446e+00  3.646e-02    39.67   &lt;2e-16 ***
+## lagresiduals 9.996e-01  5.453e-05 18332.03   &lt;2e-16 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 0.5172 on 902 degrees of freedom
+##   (1 observation deleted due to missingness)
+## Multiple R-squared:      1,  Adjusted R-squared:      1 
+## F-statistic: 3.361e+08 on 1 and 902 DF,  p-value: &lt; 2.2e-16</code></pre>
+<p>There is! Just as in Part C, there is still autocorrelation. Bailey notes that dynamic models that do not include fixed effets are biased if the errors are correlated. I believe that this also applies to fixed effects, dynamic models. Since parts c and f show that errors are correlated, we may not want to use dynamic models here. Section 13.5 of Real Stats discusses how autocorrelated errors will cause bias in a dynamic model, while it will not in OLS, making the OLS model seem more attractive in this case.</p>
 </div>
 <div id="problem-g-2" class="section level2">
 <h2>Problem G</h2>
@@ -4338,262 +4362,262 @@ summary(lm(medals_rho~ lag(medals_rho) + population_rho + gdp_rho + host_rho + f
 ## 
 ## Residuals:
 ##        Min         1Q     Median         3Q        Max 
-## -2.769e-13 -5.290e-16 -4.400e-16  2.000e-18  4.824e-14 
+## -2.938e-14  1.100e-17  2.660e-16  3.330e-16  1.711e-13 
 ## 
 ## Coefficients:
 ##                                            Estimate Std. Error    t value
-## (Intercept)                              -4.185e-14  4.197e-15 -9.970e+00
-## lag(medals_rho)                           1.000e+00  1.865e-16  5.361e+15
-## population_rho                           -1.369e-17  4.163e-17 -3.290e-01
-## gdp_rho                                  -1.587e-16  8.824e-16 -1.800e-01
-## host_rho                                 -1.205e-16  3.724e-15 -3.200e-02
-## factor(countries)Algeria                  3.881e-14  5.435e-15  7.141e+00
-## factor(countries)Andorra                  3.890e-14  5.841e-15  6.661e+00
-## factor(countries)Argentina                3.887e-14  5.454e-15  7.126e+00
-## factor(countries)Armenia                  3.810e-14  6.001e-15  6.349e+00
-## factor(countries)Australia                3.890e-14  5.554e-15  7.005e+00
-## factor(countries)Austria                  3.862e-14  5.730e-15  6.740e+00
-## factor(countries)Azerbaijan               3.814e-14  6.000e-15  6.357e+00
-## factor(countries)Belarus                  3.808e-14  6.008e-15  6.338e+00
-## factor(countries)Belgium                  3.889e-14  5.550e-15  7.006e+00
-## factor(countries)Bermuda                  3.904e-14  5.998e-15  6.510e+00
-## factor(countries)Bolivia                  3.863e-14  5.398e-15  7.158e+00
-## factor(countries)Bosnia and Herzegovina   3.810e-14  6.337e-15  6.012e+00
-## factor(countries)Brazil                   3.981e-14  6.513e-15  6.112e+00
-## factor(countries)British Virgin Islands   4.001e-14  7.055e-15  5.671e+00
-## factor(countries)Bulgaria                 3.868e-14  5.399e-15  7.165e+00
-## factor(countries)Cameroon                 3.869e-14  5.405e-15  7.158e+00
-## factor(countries)Canada                   3.887e-14  5.785e-15  6.718e+00
-## factor(countries)Chile                    3.872e-14  5.411e-15  7.156e+00
-## factor(countries)China                    4.698e-14  2.652e-14  1.772e+00
-## factor(countries)Chinese Taipei           4.749e-14  2.721e-14  1.745e+00
-## factor(countries)Colombia                 3.887e-14  5.459e-15  7.120e+00
-## factor(countries)Costa Rica               3.863e-14  5.398e-15  7.155e+00
-## factor(countries)Croatia                  3.820e-14  6.008e-15  6.358e+00
-## factor(countries)Cyprus                   3.871e-14  5.447e-15  7.107e+00
-## factor(countries)Czech Republic           3.819e-14  6.032e-15  6.332e+00
-## factor(countries)Denmark                  3.893e-14  5.655e-15  6.883e+00
-## factor(countries)Dominica                 3.860e-14  5.398e-15  7.151e+00
-## factor(countries)East Germany             3.786e-14  9.175e-15  4.126e+00
-## factor(countries)Egypt                    3.904e-14  5.571e-15  7.009e+00
-## factor(countries)Estonia                  3.822e-14  6.344e-15  6.025e+00
-## factor(countries)Ethiopia                 3.905e-14  5.736e-15  6.808e+00
-## factor(countries)Fiji                     3.859e-14  5.397e-15  7.152e+00
-## factor(countries)Finland                  3.875e-14  5.590e-15  6.931e+00
-## factor(countries)France                   3.898e-14  5.746e-15  6.783e+00
-## factor(countries)Georgia                  3.811e-14  6.000e-15  6.351e+00
-## factor(countries)Germany                  3.913e-14  6.157e-15  6.355e+00
-## factor(countries)Ghana                    3.871e-14  5.409e-15  7.157e+00
-## factor(countries)Great Britain            3.919e-14  5.700e-15  6.875e+00
-## factor(countries)Greece                   3.877e-14  5.448e-15  7.117e+00
-## factor(countries)Guatemala                3.843e-14  8.839e-15  4.348e+00
-## factor(countries)Honduras                 3.862e-14  5.397e-15  7.156e+00
-## factor(countries)Hong Kong                3.880e-14  5.499e-15  7.057e+00
-## factor(countries)Hungary                  3.872e-14  5.408e-15  7.159e+00
-## factor(countries)Iceland                  3.886e-14  5.631e-15  6.902e+00
-## factor(countries)India                    4.583e-14  2.268e-14  2.021e+00
-## factor(countries)Iran                     3.863e-14  5.913e-15  6.533e+00
-## factor(countries)Ireland                  3.885e-14  5.583e-15  6.960e+00
-## factor(countries)Israel                   3.876e-14  5.456e-15  7.104e+00
-## factor(countries)Italy                    3.905e-14  5.709e-15  6.841e+00
-## factor(countries)Jamaica                  3.861e-14  5.397e-15  7.154e+00
-## factor(countries)Japan                    3.972e-14  6.228e-15  6.378e+00
-## factor(countries)Kazakhstan               3.819e-14  6.004e-15  6.360e+00
-## factor(countries)Kenya                    3.880e-14  5.435e-15  7.139e+00
-## factor(countries)Kyrgyzstan               3.810e-14  6.001e-15  6.349e+00
-## factor(countries)Latvia                   3.868e-14  5.751e-15  6.726e+00
-## factor(countries)Lebanon                  3.870e-14  5.748e-15  6.731e+00
-## factor(countries)Liechtenstein            3.935e-14  6.705e-15  5.869e+00
-## factor(countries)Lithuania                3.815e-14  6.003e-15  6.355e+00
-## factor(countries)Luxembourg               3.907e-14  6.057e-15  6.450e+00
-## factor(countries)Macedonia                3.810e-14  6.000e-15  6.350e+00
-## factor(countries)Madegascar               3.868e-14  5.404e-15  7.158e+00
-## factor(countries)Malta                    3.866e-14  5.419e-15  7.135e+00
-## factor(countries)Mexico                   3.933e-14  5.821e-15  6.757e+00
-## factor(countries)Moldova                  3.810e-14  6.001e-15  6.348e+00
-## factor(countries)Monaco                   3.941e-14  7.138e-15  5.521e+00
-## factor(countries)Mongolia                 3.857e-14  5.550e-15  6.950e+00
-## factor(countries)Montenegro               3.805e-14  7.535e-15  5.050e+00
-## factor(countries)Morocco                  3.878e-14  5.425e-15  7.147e+00
-## factor(countries)Nepal                    3.873e-14  5.414e-15  7.154e+00
-## factor(countries)Netherlands              3.871e-14  5.647e-15  6.855e+00
-## factor(countries)Netherlands Antilles     4.231e-14  1.191e-14  3.553e+00
-## factor(countries)New Zealand              3.877e-14  5.466e-15  7.094e+00
-## factor(countries)Norway                   3.895e-14  6.111e-15  6.374e+00
-## factor(countries)Pakistan                 3.958e-14  6.182e-15  6.402e+00
-## factor(countries)Paraguay                 3.862e-14  5.396e-15  7.156e+00
-## factor(countries)Peru                     3.877e-14  5.421e-15  7.151e+00
-## factor(countries)Phillippines             3.912e-14  5.635e-15  6.942e+00
-## factor(countries)Poland                   3.894e-14  5.800e-15  6.714e+00
-## factor(countries)Portugal                 3.875e-14  5.435e-15  7.130e+00
-## factor(countries)Puerto Rico              3.873e-14  5.447e-15  7.111e+00
-## factor(countries)Romania                  3.880e-14  5.758e-15  6.738e+00
-## factor(countries)Russia                   3.930e-14  6.977e-15  5.633e+00
-## factor(countries)San Marino               3.854e-14  1.206e-14  3.197e+00
-## factor(countries)Senegal                  3.864e-14  5.399e-15  7.158e+00
-## factor(countries)Serbia                   3.812e-14  6.810e-15  5.597e+00
-## factor(countries)Serbia and Montenegro    3.819e-14  1.182e-14  3.231e+00
-## factor(countries)Slovakia                 3.865e-14  5.559e-15  6.952e+00
-## factor(countries)Slovenia                 3.825e-14  6.037e-15  6.336e+00
-## factor(countries)South Africa             3.890e-14  5.473e-15  7.108e+00
-## factor(countries)South Korea              3.901e-14  5.544e-15  7.036e+00
-## factor(countries)Spain                    3.903e-14  5.544e-15  7.040e+00
-## factor(countries)Swaziland                3.859e-14  5.396e-15  7.151e+00
-## factor(countries)Sweden                   3.850e-14  5.656e-15  6.807e+00
-## factor(countries)Switzerland              3.883e-14  5.813e-15  6.679e+00
-## factor(countries)Tajikistan               3.812e-14  6.001e-15  6.351e+00
-## factor(countries)Thailand                 3.901e-14  5.542e-15  7.039e+00
-## factor(countries)Timor-Leste              3.802e-14  7.542e-15  5.040e+00
-## factor(countries)Togo                     3.860e-14  5.396e-15  7.154e+00
-## factor(countries)Tonga                    3.859e-14  5.396e-15  7.150e+00
-## factor(countries)Trinidad and Tobago      3.865e-14  5.409e-15  7.145e+00
-## factor(countries)Turkey                   3.905e-14  5.560e-15  7.023e+00
-## factor(countries)Ukraine                  3.899e-14  5.815e-15  6.706e+00
-## factor(countries)United States            4.049e-14  8.398e-15  4.822e+00
-## factor(countries)Uruguay                  3.863e-14  5.401e-15  7.154e+00
-## factor(countries)US Virgin Islands        3.969e-14  7.605e-15  5.220e+00
-## factor(countries)Uzbekistan               3.828e-14  6.017e-15  6.363e+00
-## factor(countries)Venezuela                3.878e-14  5.424e-15  7.150e+00
-## factor(countries)Yugoslavia               3.825e-14  8.809e-15  4.341e+00
-## factor(countries)Zimbabwe                 3.865e-14  5.400e-15  7.158e+00
-## factor(years)1988                         7.005e-16  1.833e-15  3.820e-01
-## factor(years)1992                        -3.272e-15  1.856e-15 -1.763e+00
-## factor(years)1994                         5.703e-16  1.794e-15  3.180e-01
-## factor(years)1998                         6.046e-16  1.827e-15  3.310e-01
-## factor(years)2002                         5.931e-16  1.833e-15  3.240e-01
-## factor(years)2006                         6.960e-16  2.051e-15  3.390e-01
-## factor(years)2010                         7.753e-16  2.042e-15  3.800e-01
-## factor(years)2014                         6.594e-16  1.902e-15  3.470e-01
+## (Intercept)                               2.374e-14  2.575e-15  9.220e+00
+## lag(medals_rho)                           1.000e+00  1.007e-16  9.934e+15
+## population_rho                           -3.165e-17  9.101e-17 -3.480e-01
+## gdp_rho                                  -2.147e-16  6.195e-16 -3.470e-01
+## host_rho                                  6.121e-17  1.816e-15  3.400e-02
+## factor(countries)Algeria                 -2.387e-14  3.340e-15 -7.145e+00
+## factor(countries)Andorra                 -2.397e-14  3.559e-15 -6.734e+00
+## factor(countries)Argentina               -2.388e-14  3.338e-15 -7.156e+00
+## factor(countries)Armenia                 -2.363e-14  3.709e-15 -6.372e+00
+## factor(countries)Australia               -2.382e-14  3.341e-15 -7.130e+00
+## factor(countries)Austria                 -2.365e-14  3.343e-15 -7.074e+00
+## factor(countries)Azerbaijan              -2.362e-14  3.709e-15 -6.368e+00
+## factor(countries)Belarus                 -2.361e-14  3.710e-15 -6.365e+00
+## factor(countries)Belgium                 -2.390e-14  3.340e-15 -7.155e+00
+## factor(countries)Bermuda                 -2.376e-14  3.373e-15 -7.045e+00
+## factor(countries)Bolivia                 -2.392e-14  3.335e-15 -7.171e+00
+## factor(countries)Bosnia and Herzegovina  -2.363e-14  3.917e-15 -6.032e+00
+## factor(countries)Brazil                  -2.366e-14  3.425e-15 -6.908e+00
+## factor(countries)British Virgin Islands  -2.377e-14  3.788e-15 -6.276e+00
+## factor(countries)Bulgaria                -2.397e-14  3.335e-15 -7.188e+00
+## factor(countries)Cameroon                -2.389e-14  3.337e-15 -7.159e+00
+## factor(countries)Canada                  -2.377e-14  3.352e-15 -7.091e+00
+## factor(countries)Chile                   -2.390e-14  3.336e-15 -7.164e+00
+## factor(countries)China                   -2.259e-14  5.028e-15 -4.493e+00
+## factor(countries)Chinese Taipei          -2.280e-14  5.177e-15 -4.404e+00
+## factor(countries)Colombia                -2.386e-14  3.341e-15 -7.140e+00
+## factor(countries)Costa Rica              -2.392e-14  3.335e-15 -7.172e+00
+## factor(countries)Croatia                 -2.361e-14  3.710e-15 -6.363e+00
+## factor(countries)Cyprus                  -2.389e-14  3.338e-15 -7.156e+00
+## factor(countries)Czech Republic          -2.356e-14  3.713e-15 -6.345e+00
+## factor(countries)Denmark                 -2.387e-14  3.345e-15 -7.137e+00
+## factor(countries)Dominica                -2.393e-14  3.335e-15 -7.173e+00
+## factor(countries)East Germany            -2.364e-14  5.455e-15 -4.334e+00
+## factor(countries)Egypt                   -2.381e-14  3.354e-15 -7.098e+00
+## factor(countries)Estonia                 -2.361e-14  3.918e-15 -6.026e+00
+## factor(countries)Ethiopia                -2.374e-14  3.481e-15 -6.818e+00
+## factor(countries)Fiji                    -2.393e-14  3.335e-15 -7.175e+00
+## factor(countries)Finland                 -2.400e-14  3.341e-15 -7.182e+00
+## factor(countries)France                  -2.383e-14  3.344e-15 -7.127e+00
+## factor(countries)Georgia                 -2.363e-14  3.709e-15 -6.372e+00
+## factor(countries)Germany                 -2.373e-14  3.346e-15 -7.092e+00
+## factor(countries)Ghana                   -2.388e-14  3.338e-15 -7.155e+00
+## factor(countries)Great Britain           -2.383e-14  3.343e-15 -7.128e+00
+## factor(countries)Greece                  -2.389e-14  3.338e-15 -7.158e+00
+## factor(countries)Guatemala               -2.372e-14  5.453e-15 -4.350e+00
+## factor(countries)Honduras                -2.392e-14  3.335e-15 -7.171e+00
+## factor(countries)Hong Kong               -2.388e-14  3.339e-15 -7.151e+00
+## factor(countries)Hungary                 -2.394e-14  3.336e-15 -7.177e+00
+## factor(countries)Iceland                 -2.384e-14  3.347e-15 -7.123e+00
+## factor(countries)India                   -2.203e-14  6.399e-15 -3.443e+00
+## factor(countries)Iran                    -2.352e-14  3.577e-15 -6.575e+00
+## factor(countries)Ireland                 -2.382e-14  3.350e-15 -7.111e+00
+## factor(countries)Israel                  -2.388e-14  3.337e-15 -7.157e+00
+## factor(countries)Italy                   -2.409e-14  3.340e-15 -7.212e+00
+## factor(countries)Jamaica                 -2.393e-14  3.335e-15 -7.174e+00
+## factor(countries)Japan                   -2.381e-14  3.342e-15 -7.122e+00
+## factor(countries)Kazakhstan              -2.367e-14  3.709e-15 -6.381e+00
+## factor(countries)Kenya                   -2.384e-14  3.346e-15 -7.126e+00
+## factor(countries)Kyrgyzstan              -2.363e-14  3.709e-15 -6.371e+00
+## factor(countries)Latvia                  -2.397e-14  3.553e-15 -6.746e+00
+## factor(countries)Lebanon                 -2.397e-14  3.553e-15 -6.747e+00
+## factor(countries)Liechtenstein           -2.382e-14  3.645e-15 -6.535e+00
+## factor(countries)Lithuania               -2.361e-14  3.709e-15 -6.366e+00
+## factor(countries)Luxembourg              -2.377e-14  3.374e-15 -7.046e+00
+## factor(countries)Macedonia               -2.363e-14  3.709e-15 -6.370e+00
+## factor(countries)Madegascar              -2.389e-14  3.338e-15 -7.157e+00
+## factor(countries)Malta                   -2.391e-14  3.336e-15 -7.166e+00
+## factor(countries)Mexico                  -2.374e-14  3.374e-15 -7.038e+00
+## factor(countries)Moldova                 -2.363e-14  3.709e-15 -6.373e+00
+## factor(countries)Monaco                  -2.374e-14  3.386e-15 -7.011e+00
+## factor(countries)Mongolia                -2.394e-14  3.431e-15 -6.978e+00
+## factor(countries)Montenegro              -2.362e-14  4.656e-15 -5.074e+00
+## factor(countries)Morocco                 -2.389e-14  3.337e-15 -7.158e+00
+## factor(countries)Nepal                   -2.389e-14  3.338e-15 -7.158e+00
+## factor(countries)Netherlands             -2.387e-14  3.349e-15 -7.127e+00
+## factor(countries)Netherlands Antilles    -2.600e-14  7.318e-15 -3.553e+00
+## factor(countries)New Zealand             -2.391e-14  3.338e-15 -7.164e+00
+## factor(countries)Norway                  -2.381e-14  3.364e-15 -7.078e+00
+## factor(countries)Pakistan                -2.359e-14  3.482e-15 -6.774e+00
+## factor(countries)Paraguay                -2.392e-14  3.335e-15 -7.173e+00
+## factor(countries)Peru                    -2.389e-14  3.337e-15 -7.157e+00
+## factor(countries)Phillippines            -2.376e-14  3.372e-15 -7.047e+00
+## factor(countries)Poland                  -2.393e-14  3.554e-15 -6.733e+00
+## factor(countries)Portugal                -2.390e-14  3.337e-15 -7.161e+00
+## factor(countries)Puerto Rico             -2.389e-14  3.338e-15 -7.158e+00
+## factor(countries)Romania                 -2.399e-14  3.553e-15 -6.754e+00
+## factor(countries)Russia                  -2.354e-14  3.751e-15 -6.276e+00
+## factor(countries)San Marino              -2.337e-14  7.348e-15 -3.181e+00
+## factor(countries)Senegal                 -2.391e-14  3.336e-15 -7.166e+00
+## factor(countries)Serbia                  -2.363e-14  4.209e-15 -5.614e+00
+## factor(countries)Serbia and Montenegro   -2.363e-14  7.306e-15 -3.235e+00
+## factor(countries)Slovakia                -2.390e-14  3.431e-15 -6.965e+00
+## factor(countries)Slovenia                -2.366e-14  3.714e-15 -6.371e+00
+## factor(countries)South Africa            -2.384e-14  3.344e-15 -7.130e+00
+## factor(countries)South Korea             -2.386e-14  3.341e-15 -7.143e+00
+## factor(countries)Spain                   -2.388e-14  3.340e-15 -7.149e+00
+## factor(countries)Swaziland               -2.393e-14  3.335e-15 -7.175e+00
+## factor(countries)Sweden                  -2.386e-14  3.343e-15 -7.135e+00
+## factor(countries)Switzerland             -2.389e-14  3.346e-15 -7.141e+00
+## factor(countries)Tajikistan              -2.362e-14  3.709e-15 -6.368e+00
+## factor(countries)Thailand                -2.386e-14  3.341e-15 -7.143e+00
+## factor(countries)Timor-Leste             -2.364e-14  4.657e-15 -5.076e+00
+## factor(countries)Togo                    -2.392e-14  3.335e-15 -7.173e+00
+## factor(countries)Tonga                   -2.393e-14  3.335e-15 -7.175e+00
+## factor(countries)Trinidad and Tobago     -2.392e-14  3.336e-15 -7.170e+00
+## factor(countries)Turkey                  -2.382e-14  3.349e-15 -7.111e+00
+## factor(countries)Ukraine                 -2.402e-14  3.553e-15 -6.759e+00
+## factor(countries)United States           -2.388e-14  3.471e-15 -6.881e+00
+## factor(countries)Uruguay                 -2.393e-14  3.335e-15 -7.175e+00
+## factor(countries)US Virgin Islands       -2.447e-14  4.669e-15 -5.242e+00
+## factor(countries)Uzbekistan              -2.363e-14  3.712e-15 -6.366e+00
+## factor(countries)Venezuela               -2.388e-14  3.338e-15 -7.153e+00
+## factor(countries)Yugoslavia              -2.357e-14  5.444e-15 -4.330e+00
+## factor(countries)Zimbabwe                -2.392e-14  3.336e-15 -7.170e+00
+## factor(years)1988                        -2.754e-16  1.139e-15 -2.420e-01
+## factor(years)1992                         2.260e-15  1.127e-15  2.006e+00
+## factor(years)1994                        -2.734e-16  1.084e-15 -2.520e-01
+## factor(years)1998                        -2.263e-16  1.076e-15 -2.100e-01
+## factor(years)2002                        -2.529e-16  1.070e-15 -2.360e-01
+## factor(years)2006                        -1.343e-16  1.151e-15 -1.170e-01
+## factor(years)2010                        -2.267e-16  1.094e-15 -2.070e-01
+## factor(years)2014                        -3.558e-16  1.086e-15 -3.280e-01
 ##                                          Pr(&gt;|t|)    
 ## (Intercept)                               &lt; 2e-16 ***
 ## lag(medals_rho)                           &lt; 2e-16 ***
-## population_rho                           0.742338    
-## gdp_rho                                  0.857354    
-## host_rho                                 0.974206    
-## factor(countries)Algeria                 2.28e-12 ***
-## factor(countries)Andorra                 5.41e-11 ***
-## factor(countries)Argentina               2.51e-12 ***
-## factor(countries)Armenia                 3.83e-10 ***
-## factor(countries)Australia               5.67e-12 ***
-## factor(countries)Austria                 3.24e-11 ***
-## factor(countries)Azerbaijan              3.65e-10 ***
-## factor(countries)Belarus                 4.09e-10 ***
-## factor(countries)Belgium                 5.62e-12 ***
-## factor(countries)Bermuda                 1.41e-10 ***
-## factor(countries)Bolivia                 2.02e-12 ***
-## factor(countries)Bosnia and Herzegovina  2.90e-09 ***
-## factor(countries)Brazil                  1.61e-09 ***
-## factor(countries)British Virgin Islands  2.05e-08 ***
-## factor(countries)Bulgaria                1.93e-12 ***
+## population_rho                           0.728112    
+## gdp_rho                                  0.728933    
+## host_rho                                 0.973117    
+## factor(countries)Algeria                 2.21e-12 ***
+## factor(countries)Andorra                 3.38e-11 ***
+## factor(countries)Argentina               2.05e-12 ***
+## factor(countries)Armenia                 3.33e-10 ***
+## factor(countries)Australia               2.44e-12 ***
+## factor(countries)Austria                 3.56e-12 ***
+## factor(countries)Azerbaijan              3.42e-10 ***
+## factor(countries)Belarus                 3.48e-10 ***
+## factor(countries)Belgium                 2.06e-12 ***
+## factor(countries)Bermuda                 4.33e-12 ***
+## factor(countries)Bolivia                 1.85e-12 ***
+## factor(countries)Bosnia and Herzegovina  2.58e-09 ***
+## factor(countries)Brazil                  1.08e-11 ***
+## factor(countries)British Virgin Islands  6.01e-10 ***
+## factor(countries)Bulgaria                1.64e-12 ***
 ## factor(countries)Cameroon                2.01e-12 ***
-## factor(countries)Canada                  3.74e-11 ***
-## factor(countries)Chile                   2.04e-12 ***
-## factor(countries)China                   0.076885 .  
-## factor(countries)Chinese Taipei          0.081340 .  
-## factor(countries)Colombia                2.61e-12 ***
-## factor(countries)Costa Rica              2.06e-12 ***
-## factor(countries)Croatia                 3.62e-10 ***
-## factor(countries)Cyprus                  2.86e-12 ***
-## factor(countries)Czech Republic          4.24e-10 ***
-## factor(countries)Denmark                 1.27e-11 ***
-## factor(countries)Dominica                2.12e-12 ***
-## factor(countries)East Germany            4.12e-05 ***
-## factor(countries)Egypt                   5.53e-12 ***
-## factor(countries)Estonia                 2.70e-09 ***
-## factor(countries)Ethiopia                2.09e-11 ***
-## factor(countries)Fiji                    2.11e-12 ***
-## factor(countries)Finland                 9.30e-12 ***
-## factor(countries)France                  2.45e-11 ***
-## factor(countries)Georgia                 3.80e-10 ***
-## factor(countries)Germany                 3.69e-10 ***
-## factor(countries)Ghana                   2.04e-12 ***
-## factor(countries)Great Britain           1.34e-11 ***
-## factor(countries)Greece                  2.67e-12 ***
-## factor(countries)Guatemala               1.57e-05 ***
-## factor(countries)Honduras                2.04e-12 ***
-## factor(countries)Hong Kong               4.01e-12 ***
-## factor(countries)Hungary                 2.01e-12 ***
-## factor(countries)Iceland                 1.12e-11 ***
-## factor(countries)India                   0.043675 *  
-## factor(countries)Iran                    1.22e-10 ***
-## factor(countries)Ireland                 7.68e-12 ***
-## factor(countries)Israel                  2.92e-12 ***
-## factor(countries)Italy                   1.68e-11 ***
-## factor(countries)Jamaica                 2.08e-12 ***
-## factor(countries)Japan                   3.20e-10 ***
-## factor(countries)Kazakhstan              3.57e-10 ***
-## factor(countries)Kenya                   2.30e-12 ***
-## factor(countries)Kyrgyzstan              3.82e-10 ***
-## factor(countries)Latvia                  3.54e-11 ***
-## factor(countries)Lebanon                 3.43e-11 ***
-## factor(countries)Liechtenstein           6.67e-09 ***
-## factor(countries)Lithuania               3.70e-10 ***
-## factor(countries)Luxembourg              2.06e-10 ***
-## factor(countries)Macedonia               3.81e-10 ***
-## factor(countries)Madegascar              2.02e-12 ***
-## factor(countries)Malta                   2.37e-12 ***
-## factor(countries)Mexico                  2.91e-11 ***
-## factor(countries)Moldova                 3.86e-10 ***
-## factor(countries)Monaco                  4.70e-08 ***
-## factor(countries)Mongolia                8.16e-12 ***
-## factor(countries)Montenegro              5.60e-07 ***
-## factor(countries)Morocco                 2.17e-12 ***
-## factor(countries)Nepal                   2.08e-12 ***
-## factor(countries)Netherlands             1.53e-11 ***
-## factor(countries)Netherlands Antilles    0.000406 ***
-## factor(countries)New Zealand             3.13e-12 ***
-## factor(countries)Norway                  3.29e-10 ***
-## factor(countries)Pakistan                2.76e-10 ***
-## factor(countries)Paraguay                2.05e-12 ***
-## factor(countries)Peru                    2.12e-12 ***
-## factor(countries)Phillippines            8.61e-12 ***
-## factor(countries)Poland                  3.84e-11 ***
-## factor(countries)Portugal                2.45e-12 ***
-## factor(countries)Puerto Rico             2.79e-12 ***
-## factor(countries)Romania                 3.28e-11 ***
-## factor(countries)Russia                  2.54e-08 ***
-## factor(countries)San Marino              0.001450 ** 
-## factor(countries)Senegal                 2.02e-12 ***
-## factor(countries)Serbia                  3.10e-08 ***
-## factor(countries)Serbia and Montenegro   0.001290 ** 
-## factor(countries)Slovakia                8.09e-12 ***
-## factor(countries)Slovenia                4.15e-10 ***
-## factor(countries)South Africa            2.84e-12 ***
-## factor(countries)South Korea             4.61e-12 ***
-## factor(countries)Spain                   4.50e-12 ***
-## factor(countries)Swaziland               2.11e-12 ***
-## factor(countries)Sweden                  2.09e-11 ***
-## factor(countries)Switzerland             4.82e-11 ***
-## factor(countries)Tajikistan              3.78e-10 ***
-## factor(countries)Thailand                4.52e-12 ***
-## factor(countries)Timor-Leste             5.88e-07 ***
-## factor(countries)Togo                    2.07e-12 ***
-## factor(countries)Tonga                   2.13e-12 ***
-## factor(countries)Trinidad and Tobago     2.20e-12 ***
-## factor(countries)Turkey                  5.02e-12 ***
-## factor(countries)Ukraine                 4.05e-11 ***
-## factor(countries)United States           1.74e-06 ***
-## factor(countries)Uruguay                 2.08e-12 ***
-## factor(countries)US Virgin Islands       2.35e-07 ***
-## factor(countries)Uzbekistan              3.52e-10 ***
-## factor(countries)Venezuela               2.13e-12 ***
-## factor(countries)Yugoslavia              1.62e-05 ***
-## factor(countries)Zimbabwe                2.01e-12 ***
-## factor(years)1988                        0.702383    
-## factor(years)1992                        0.078325 .  
-## factor(years)1994                        0.750620    
-## factor(years)1998                        0.740800    
-## factor(years)2002                        0.746304    
-## factor(years)2006                        0.734464    
-## factor(years)2010                        0.704275    
-## factor(years)2014                        0.728956    
+## factor(countries)Canada                  3.17e-12 ***
+## factor(countries)Chile                   1.95e-12 ***
+## factor(countries)China                   8.16e-06 ***
+## factor(countries)Chinese Taipei          1.23e-05 ***
+## factor(countries)Colombia                2.29e-12 ***
+## factor(countries)Costa Rica              1.84e-12 ***
+## factor(countries)Croatia                 3.53e-10 ***
+## factor(countries)Cyprus                  2.04e-12 ***
+## factor(countries)Czech Republic          3.94e-10 ***
+## factor(countries)Denmark                 2.34e-12 ***
+## factor(countries)Dominica                1.82e-12 ***
+## factor(countries)East Germany            1.67e-05 ***
+## factor(countries)Egypt                   3.04e-12 ***
+## factor(countries)Estonia                 2.68e-09 ***
+## factor(countries)Ethiopia                1.95e-11 ***
+## factor(countries)Fiji                    1.79e-12 ***
+## factor(countries)Finland                 1.72e-12 ***
+## factor(countries)France                  2.50e-12 ***
+## factor(countries)Georgia                 3.32e-10 ***
+## factor(countries)Germany                 3.16e-12 ***
+## factor(countries)Ghana                   2.06e-12 ***
+## factor(countries)Great Britain           2.48e-12 ***
+## factor(countries)Greece                  2.03e-12 ***
+## factor(countries)Guatemala               1.56e-05 ***
+## factor(countries)Honduras                1.84e-12 ***
+## factor(countries)Hong Kong               2.12e-12 ***
+## factor(countries)Hungary                 1.77e-12 ***
+## factor(countries)Iceland                 2.56e-12 ***
+## factor(countries)India                   0.000608 ***
+## factor(countries)Iran                    9.34e-11 ***
+## factor(countries)Ireland                 2.79e-12 ***
+## factor(countries)Israel                  2.03e-12 ***
+## factor(countries)Italy                   1.40e-12 ***
+## factor(countries)Jamaica                 1.81e-12 ***
+## factor(countries)Japan                   2.58e-12 ***
+## factor(countries)Kazakhstan              3.15e-10 ***
+## factor(countries)Kenya                   2.51e-12 ***
+## factor(countries)Kyrgyzstan              3.35e-10 ***
+## factor(countries)Latvia                  3.13e-11 ***
+## factor(countries)Lebanon                 3.09e-11 ***
+## factor(countries)Liechtenstein           1.20e-10 ***
+## factor(countries)Lithuania               3.46e-10 ***
+## factor(countries)Luxembourg              4.30e-12 ***
+## factor(countries)Macedonia               3.36e-10 ***
+## factor(countries)Madegascar              2.03e-12 ***
+## factor(countries)Malta                   1.91e-12 ***
+## factor(countries)Mexico                  4.56e-12 ***
+## factor(countries)Moldova                 3.31e-10 ***
+## factor(countries)Monaco                  5.47e-12 ***
+## factor(countries)Mongolia                6.78e-12 ***
+## factor(countries)Montenegro              4.97e-07 ***
+## factor(countries)Morocco                 2.02e-12 ***
+## factor(countries)Nepal                   2.02e-12 ***
+## factor(countries)Netherlands             2.50e-12 ***
+## factor(countries)Netherlands Antilles    0.000405 ***
+## factor(countries)New Zealand             1.94e-12 ***
+## factor(countries)Norway                  3.48e-12 ***
+## factor(countries)Pakistan                2.61e-11 ***
+## factor(countries)Paraguay                1.83e-12 ***
+## factor(countries)Peru                    2.03e-12 ***
+## factor(countries)Phillippines            4.27e-12 ***
+## factor(countries)Poland                  3.39e-11 ***
+## factor(countries)Portugal                1.98e-12 ***
+## factor(countries)Puerto Rico             2.01e-12 ***
+## factor(countries)Romania                 2.97e-11 ***
+## factor(countries)Russia                  6.01e-10 ***
+## factor(countries)San Marino              0.001532 ** 
+## factor(countries)Senegal                 1.91e-12 ***
+## factor(countries)Serbia                  2.82e-08 ***
+## factor(countries)Serbia and Montenegro   0.001274 ** 
+## factor(countries)Slovakia                7.42e-12 ***
+## factor(countries)Slovenia                3.34e-10 ***
+## factor(countries)South Africa            2.45e-12 ***
+## factor(countries)South Korea             2.24e-12 ***
+## factor(countries)Spain                   2.15e-12 ***
+## factor(countries)Swaziland               1.80e-12 ***
+## factor(countries)Sweden                  2.35e-12 ***
+## factor(countries)Switzerland             2.27e-12 ***
+## factor(countries)Tajikistan              3.40e-10 ***
+## factor(countries)Thailand                2.24e-12 ***
+## factor(countries)Timor-Leste             4.91e-07 ***
+## factor(countries)Togo                    1.83e-12 ***
+## factor(countries)Tonga                   1.80e-12 ***
+## factor(countries)Trinidad and Tobago     1.87e-12 ***
+## factor(countries)Turkey                  2.77e-12 ***
+## factor(countries)Ukraine                 2.86e-11 ***
+## factor(countries)United States           1.29e-11 ***
+## factor(countries)Uruguay                 1.80e-12 ***
+## factor(countries)US Virgin Islands       2.08e-07 ***
+## factor(countries)Uzbekistan              3.46e-10 ***
+## factor(countries)Venezuela               2.09e-12 ***
+## factor(countries)Yugoslavia              1.70e-05 ***
+## factor(countries)Zimbabwe                1.87e-12 ***
+## factor(years)1988                        0.809014    
+## factor(years)1992                        0.045238 *  
+## factor(years)1994                        0.800949    
+## factor(years)1998                        0.833572    
+## factor(years)2002                        0.813191    
+## factor(years)2006                        0.907218    
+## factor(years)2010                        0.835990    
+## factor(years)2014                        0.743371    
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
-## Residual standard error: 1.11e-14 on 721 degrees of freedom
+## Residual standard error: 6.861e-15 on 721 degrees of freedom
 ##   (162 observations deleted due to missingness)
 ## Multiple R-squared:      1,  Adjusted R-squared:      1 
-## F-statistic: 6.898e+29 on 121 and 721 DF,  p-value: &lt; 2.2e-16</code></pre>
+## F-statistic: 9.853e+29 on 121 and 721 DF,  p-value: &lt; 2.2e-16</code></pre>
 <p>The coefficients on all three variables are quite a bit smaller in part g than in both of the other models. I was a bit confused by this at first. Bailey notes that using a dynamic model when there are correlated errors can cause the coefficients to become nullified (since the lagged dependent variable will do such a good job of explaining the dependent variable). The results in part G show that the significance of population, gdp, and host are much lower, but I would not have expected this to be the case since rho-deletion should have gotten rid of the error. The coefficients are certainly biased since the model includes both fixed effects and a lagged Y, so perhaps that bias is what caused the coefficients on host, GDP, and population to change so much. I think the most likely cause is that lag(medals_rho) was an omitted variable before. I think that the lagged count of medals is probably a far better predictor than GDP, host, and population, so it makes sense that those coefficients are basically 0 when we include lagged medals in the model.</p>
 <p>However, I think that I also want to be careful when interpreting these results since there is a unit root on the lagged Y variable. Bailey notes that a unit root can lead to incorrect inferences.</p>
 </div>

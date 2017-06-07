@@ -541,7 +541,7 @@ olympicsdata$LagResiduals[olympicsdata$LagID != olympicsdata$ID] = NA
 RhoHat<-lm(residuals~LagResiduals, data=olympicsdata)
 summary(RhoHat)
 ```
-The coefficient on LagResiduals is highly statistically significant, so there does appear to be autocorrelation.
+The coefficient on LagResiduals is highly statistically significant, so there does appear to be autocorrelation. Autocorrelation will not bias our coefficients but does mean that we are underestimating our standard errors.
 
 ## Prolem D
 ```{r}
@@ -580,7 +580,15 @@ summary(plm(medals~lag(medals) + population + GDP + host, data=olympicsdata, ind
 The new model is dynamic, meaning that a lag(medals) argument is included on the right hand side now. The dynamic model produces biased coefficients, whereas the fixed effects model does not. Specificially, fixed effects and dynamic models are biased because the lagged dependent variable is endogenous. Even though bias is present, the coefficients on host and population actually are not that different across the models. Perhaps that's because we have a good amount of data; Bailey notes that the bias is inversely correlated with data quantity. The coefficients are also different across models because the coefficient in the dynamic model affects Y in the current and next time period.
 
 ## Problem F
-There is! Bailey notes that dynamic models that do not include fixed effets are biased if the errors are correlated. I believe that this also applies to fixed effects, dynamic models. Since part c shows that errors are correlated, we may not want to use dynamic models here. Section 13.5 of Real Stats discusses how autocorrelated errors will cause bias in a dynamic model, while it will not in OLS, making the OLS model seem more attractive in this case.
+```{r}
+library(plm)
+residuals <- as.numeric(names((plm(medals~lag(medals) + population + GDP + host, data=olympicsdata, index=c("year", "country"), effect="twoways")$residuals)))
+lagresiduals <- c(NA, residuals[1:length(residuals)-1])
+RhoHat<-lm(residuals~lagresiduals)
+summary(RhoHat)
+```
+There is! Just as in Part C, there is still autocorrelation. Bailey notes that dynamic models that do not include fixed effets are biased if the errors are correlated. I believe that this also applies to fixed effects, dynamic models. Since parts c and f show that errors are correlated, we may not want to use dynamic models here. Section 13.5 of Real Stats discusses how autocorrelated errors will cause bias in a dynamic model, while it will not in OLS, making the OLS model seem more attractive in this case.
+
 
 ## Problem G
 ```{r}
