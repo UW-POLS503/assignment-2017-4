@@ -258,7 +258,7 @@ The value is given by our regression. The fitted value for a democrat with GOP2p
 The value is given by our regression. It is the coefficient on beta-knot, approximately -.31.
 ```{r}
 -0.57758 + (.5 * 0.52861)
-[1] -0.313275
+# [1] -0.313275
 ```
 ### Republican with GOP2party2010=.5
 The value is also given by our regression. It is the coefficient on beta-knot + the coefficient on GOPwin2010, approximately .67. 
@@ -323,12 +323,12 @@ The coefficient on GOPwin2010 is about 1.05, meaning that the mean Ideology is a
 
 ## Problem K
 ```{r}
-congress_data$squared_int <- (congress_data$GOP2party2010*GOPwin2010) ^2
+congress_data$squared_int <- (congress_data$GOP2party2010*congress_data$GOPwin2010) ^2
 quad <- lm(Ideology ~ GOPwin2010 + GOP2party2010 + GOP2party2010 + GOP2party2010*GOPwin2010 + squared_int + ChildPoverty + MedianIncome + Obama2008 + WhitePct, data=congress_data)
 # Citation: Bailey's Chapter 7 Computing Corner. Referenced the Chapter 7 computing corner to figure out how to make a quadratic term
 summary(quad)
 ```
-The shape of the regression line may change when using a quadratic function, but the coefficient on GOPwin2010 is basically the exact same as it was in part J. The fitted values, especially as we move further away from GOP2party2010=.5, will be quite different. The beta-knot value is also different, as is to be expected by changing the slope of the non-treated regression line.
+The coefficient on GOPwin2010 is lower than it was in part J (.7 versus 1.05). The fitted values, especially as we move further away from GOP2party2010=.5, will be quite different. The beta-knot value is also different, as is to be expected by changing the slope of the non-treated regression line.
 
 ## Problem L
 ```{r}
@@ -458,19 +458,23 @@ Since the coefficient on LagErrors is not statistically significant, we cannot s
 
 ## Problem B
 ```{r}
+summary(lm(trips~lowtemp + weekend, data=bikedata))
+```
+
+```{r}
 # referenced code from Bailey's Chapter 13 computing corner
 Rho_hat <- summary(AuxReg)$coefficients[2]
 bikedata$lag_lowtemp <- c(NA, bikedata$lowtemp[1:nrow(bikedata) -1])
 bikedata$lag_trips <- c(NA, bikedata$trips[1:nrow(bikedata) -1])
 bikedata$lag_weeekend <- c(NA, bikedata$weekend[1:nrow(bikedata) -1])
 
-bikedata$lowtemp_rho <- bikedata$lowtemp - Rho_hat*lag_lowtemp
-bikedata$trips_rho <- bikedata$trips - Rho_hat*lag_trips
-bikedata$weekend_rho <- bikedata$weekend - Rho_hat*lag_weeekend
+bikedata$lowtemp_rho <- bikedata$lowtemp - Rho_hat*bikedata$lag_lowtemp
+bikedata$trips_rho <- bikedata$trips - Rho_hat*bikedata$lag_trips
+bikedata$weekend_rho <- bikedata$weekend - Rho_hat*bikedata$lag_weeekend
 
 summary(lm(trips_rho~lowtemp_rho + weekend_rho, data=bikedata))
 ```
-The coefficient on lowtemp_rho is a bit lower than the corresponding coefficient in the first regression. Baily notes that it is ok that the coefficient in the rho transformed model is different than the coefficient in the original OLS (both are still not subject to bias in OLS because they are both estimates of the true beta). The standard error on the low temperature coefficient is larger in the part b regression than in the part a regression (24.85 vs 22.78, respectively), which is to be expected in the autocorrelation corrected model vs the non-corrected model.
+The coefficient on lowtemp_rho is a bit lower than the corresponding coefficient in the first regression. Bailey notes that it is ok that the coefficient in the rho transformed model is different than the coefficient in the original OLS (both are still not subject to bias in OLS because they are both estimates of the true beta). The standard error on the low temperature coefficient is larger in the part b regression than in the part a regression (24.85 vs 22.78, respectively), which is to be expected in the autocorrelation corrected model vs the non-corrected model.
 
 # Problem 15.1
 ```{r}
