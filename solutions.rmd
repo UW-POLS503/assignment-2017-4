@@ -10,14 +10,14 @@ data <- read.csv("Ch08.Ex2.PeaceCorpsData/PeaceCorpsHW.csv")
 ```
 
 ## Problem A
-Intuitively, it makes sense that people would be more likely to apply to the peace corps when the economy is doing poorly. When the economy is booming, it is easier for young people to get jobs, so they have more options. When there are fewer job options, some young people may be swayed to apply to the Peace Corps.
+Intuitively, it makes sense that people would be more likely to apply to the peace corps when the economy is doing poorly. When the economy is booming, it is easier for young people to get jobs in the private sector; young people will have more options for higher paying jobs. When there are fewer job options, more young people may be swayed to apply to the Peace Corps.
 
 ## Problem B
 ```{r}
 TwoB <- lm(appspc ~ unemployrate + yr1 + yr2 + yr3 + yr4 + yr5 + yr6, data=data)
 summary(TwoB)
 ```
-For each one unit increase in the unemployment rate, there is a corresponding 1.107 increase in the conditional mean of peace orpos applications. The coefficient is not statistically significant. It seems plausible that the relationship between applications and unemployment is different between states due to time-invariant factors (e.g. people in Mississippi may be more inclined to apply to the peace corps than people in Alabama for some reason), so a better model may include fixed effects on state.
+For each one unit increase in the unemployment rate, there is a corresponding 1.107 increase in the conditional mean of peace corps applications. The coefficient is not statistically significant. It seems plausible that the relationship between applications and unemployment is different between states due to factors that do not change over time (e.g. people in Mississippi may be more inclined to apply to the peace corps than people in Alabama for some reason), so a better model may include fixed effects on state.
 
 
 ## Problem C
@@ -48,7 +48,7 @@ check_no_DC <- lm(appspc ~ unemployrate + yr1 + yr2 + yr3 + yr4 + yr5 + yr6, dat
 summary(check_no_DC)
 ```
 
-We can also look at the scatterplot with and without DC. The scatter looks dramatically different without DC than it did with DC. The slight positive slope of the regression line is now a slight negative slope.
+We can also look at the scatterplot with and without DC. The scatter looks dramatically different without DC than it did with DC. The slight positive slope (in the model with DC) of the regression line is now a slight negative slope (in the model without DC).
 ```{r}
 ggplot(no_DC, aes(x=unemployrate, y=appspc)) + geom_text(aes(label=stateshort))
 # Referenced an online ggplot tutorial to create the plot
@@ -67,8 +67,9 @@ summary(no_DC_pooled)
 As shown in Part C, the coefficient on unemployrate went from beign positive to negative. For each one unit increase in the unemployment rate without DC's data points, there is a 1.964 unit decrease in in appspc. The coefficient is statistically significant at the alpha = .15 level.
 
 ## Problem E
-The results change significantly. The coefficient in the pooled regression is -1.964, versus 0.8125 in the fixed effects model. The fixed effects model is preferable in my opinion. Controlling for fixed effects controls for time invariant variables that could confound the relationship between unemployment rate and applications (e.g. perhaps people in DC are more likely to apply to the Peace Corps than people in Alabama for whatever reason). In addition, the fixed effect on year controls for time period effects (i.e. effects that change the number of applications in a year across all states).
+The results change significantly. The coefficient in the pooled regression is -1.964, versus 0.8125 in the fixed effects model. The fixed effects model is preferable in my opinion. Controlling for fixed effects controls for variables that do not change over time that could confound the relationship between unemployment rate and applications (e.g. perhaps people in DC are more likely to apply to the Peace Corps than people in Alabama for whatever reason). In addition, the fixed effect on year controls for time period effects (i.e. effects that change the number of applications in a year across all states).
 ```{r}
+# Using code from Bailey's Chapter 8 computing corner
 no_DC_fixed <- lm(appspc ~ unemployrate + factor(state) + factor(year), data=no_DC)
 summary(no_DC_fixed)
 ```
@@ -77,9 +78,9 @@ summary(no_DC_fixed)
 ```{r}
 # I used code from Bailey's chapter 8 computing corner to run this code
 library(plm)
-plm(appspc ~ unemployrate, data=no_DC, index=c("state", "year"), model="within", effect="twoways")
+summary(plm(appspc ~ unemployrate, data=no_DC, index=c("state", "year"), model="within", effect="twoways"))
 ```
-The coefficient on unemployrate is the same using the de-meaned approach or the LSDV approach.
+The coefficient and standard error for unemployrate are the same using the de-meaned approach or the LSDV approach.
 
 
 # Problem 8.5
@@ -451,7 +452,7 @@ LagErrors<- c(NA, Errors[1:(length(Errors)-1)])
 AuxReg <- lm(Errors ~ LagErrors)
 summary(AuxReg)
 ```
-Since the coefficient on LagErrors is not statistically significant, we cannot say that there is autocorrelation in the data.
+Since the coefficient on LagErrors is not statistically significant, we cannot say that there is autocorrelation in our errors.
 
 ## Problem B
 ```{r}
@@ -467,7 +468,7 @@ bikedata$weekend_rho <- bikedata$weekend - Rho_hat*lag_weeekend
 
 summary(lm(trips_rho~lowtemp_rho + weekend_rho, data=bikedata))
 ```
-The coefficient on lowtemp_rho is a bit lower than the corresponding coefficient in the first regression. Baily notes that it is ok that the coefficient in the rho transformed model is different than the coefficient in the original OLS (both are still not subject to bias). The standard error on the low temperature coefficient is larger in the part b regression than in the part a regression (24.85 vs 22.78, respectively).
+The coefficient on lowtemp_rho is a bit lower than the corresponding coefficient in the first regression. Baily notes that it is ok that the coefficient in the rho transformed model is different than the coefficient in the original OLS (both are still not subject to bias in OLS because they are both estimates of the true beta). The standard error on the low temperature coefficient is larger in the part b regression than in the part a regression (24.85 vs 22.78, respectively), which is to be expected in the autocorrelation corrected model vs the non-corrected model.
 
 # Problem 15.1
 ```{r}
