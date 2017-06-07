@@ -69,14 +69,14 @@ As shown in Part C, the coefficient on unemployrate went from beign positive to 
 ## Problem E
 The results change significantly. The coefficient in the pooled regression is -1.964, versus 0.8125 in the fixed effects model. The fixed effects model is preferable in my opinion. Controlling for fixed effects controls for variables that do not change over time that could confound the relationship between unemployment rate and applications (e.g. perhaps people in DC are more likely to apply to the Peace Corps than people in Alabama for whatever reason). In addition, the fixed effect on year controls for time period effects (i.e. effects that change the number of applications in a year across all states).
 ```{r}
-# Using code from Bailey's Chapter 8 computing corner
+# referenced code from Bailey's Chapter 8 computing corner
 no_DC_fixed <- lm(appspc ~ unemployrate + factor(state) + factor(year), data=no_DC)
 summary(no_DC_fixed)
 ```
 
 ## Problem F
 ```{r}
-# I used code from Bailey's chapter 8 computing corner to run this code
+# I referenced from Bailey's chapter 8 computing corner to run this code
 library(plm)
 summary(plm(appspc ~ unemployrate, data=no_DC, index=c("state", "year"), model="within", effect="twoways"))
 ```
@@ -356,7 +356,7 @@ The equation is:
 $$
 \text{Mortality} = \beta_0 + \beta_{1}\text{Headsart}_i + \beta_{2}\text{Poverty}_i + \epsilon_i
 $$
-As opoposed to drawing, I will explain what I think the graph will look like. I would assume that counties where the poverty level is slightly below 59.2% would have slightly lower mortality rates than areas where the poverty level is slightly above 59.2%. I would expect that the slope will be positive non-linear to the left of the cutoff, where increasing income leads to a decrease in mortality. I would expect the data to the left of the cutoff to exhibit diminishing marginal returns to health as income increases. To the right of the cutoff, I would expect for the line to be non-linear, since there are diminishing marginal returns to mortality as wealth increases significantly (e.g. people that make 100,000 dollars per year are not likely to be significantly less healthy than people that make 150,000 dollars per year, whereas I would expect that someone who makes 50,000 dollars per year is significantly healthier than someone who makes 0 dollars per year).
+As opoposed to drawing, I will explain what I think the graph will look like. I would assume that counties where the poverty level is slightly below 59.2% would have slightly lower mortality rates than areas where the poverty level is slightly above 59.2%. I would expect that the slope will be negative to the left and right of the cutoff.To the left and right of the cutoff, I would expect for the line to be non-linear, since there are diminishing marginal returns to health as wealth increases significantly (e.g. people that make 100,000 dollars per year are not likely to be significantly less healthy than people that make 150,000 dollars per year, whereas I would expect that someone who makes 50,000 dollars per year is significantly healthier than someone who makes 0 dollars per year).
 
 ## Problem B
 Regression discontinuity can help explain causation since including the assignment variable on the right side of the equation can ensure that the coefficient on the treatment variables is exogenous.
@@ -392,6 +392,7 @@ quad <- lm(Mortality ~ HeadStart + Poverty + HeadStart*Poverty + I((HeadStart*Po
 # Citation: Bailey's Chapter 7 Computing Corner. Referenced the Chapter 7 computing corner to figure out how to make a quadratic term
 summary(quad)
 ```
+The coefficient on headstart is slightly higher in the quadratic model (-1.63245) than in the smaller window model (-2.1035).
 
 ## Problem G
 ```{r}
@@ -424,7 +425,7 @@ ggplot(headstart_window, aes(x=Bin, y=BinMean)) + geom_point()
 # Reference
 # "Label Points in Geom_point." Stack Overflow. Stack Exchange Inc., n.d. Web. 3 June 2017. <https://stackoverflow.com/questions/15624656/label-points-in-geom-point>. Referenced the answer by username "agstudy" on (answer was edited by username "micstr" on July 31, 2016)
 ```
-Binning is often useful to idenfy a discontinuity. I think our bins might be too large in this case, but they seem to show the opposite of what I would have expected; the graph shows that the mortality rate is higher just to the left of the discontinuity compared to just the right of the discontinuity.
+Binning is often useful to idenfy a discontinuity. I think our bins might be too large in this case, but they seem to show the opposite of what I would have expected; the graph shows that the mortality rate is higher just to the left of the discontinuity compared to just the right of the discontinuity. (I used the Bin and BinMean columns that were included in the dataset).
 
 ## Problem I
 ```{r}
@@ -445,7 +446,7 @@ bikedata <- read.csv("Ch13.Ex1.BikeShareData/BikeShare.csv")
 
 ## Problem A
 ```{r}
-# using code from Bailey's Chapter 13 computing corner
+# referenced code from Bailey's Chapter 13 computing corner
 OneA <- lm(trips ~ lowtemp + weekend, data=bikedata)
 summary(OneA)
 Errors <- resid(OneA)
@@ -457,7 +458,7 @@ Since the coefficient on LagErrors is not statistically significant, we cannot s
 
 ## Problem B
 ```{r}
-# using code from Bailey's Chapter 13 computing corner
+# referenced code from Bailey's Chapter 13 computing corner
 Rho_hat <- summary(AuxReg)$coefficients[2]
 bikedata$lag_lowtemp <- c(NA, bikedata$lowtemp[1:nrow(bikedata) -1])
 bikedata$lag_trips <- c(NA, bikedata$trips[1:nrow(bikedata) -1])
@@ -485,6 +486,7 @@ For each one unit increase in temp, there is a corresponding -.00003 decrease in
 
 ## Problem B
 ```{r}
+# referenced code from Bailey's chapter 8 compute corner
 OneB <- lm(medals ~ population + GDP + host + factor(year) + factor(country), data=olympicsdata)
 # ^Bailey recommends using the plm command, but this yields the same results
 summary(OneB)
@@ -506,7 +508,7 @@ The coefficient on LagResiduals is highly statistically significant, so there do
 
 ## Prolem D
 ```{r}
-# Used code from Bailey's Chapter 15 compute corner
+# referenced code from Bailey's Chapter 15 computing corner
 # create lag variables
 olympicsdata$LagMedals <- c(NA, olympicsdata$medals[1:nrow(olympicsdata)-1])
 olympicsdata$LagPopulation <- c(NA, olympicsdata$population[1:nrow(olympicsdata)-1])
@@ -534,7 +536,7 @@ The standard errors on GDP and population are higher in the autocorrelation dele
 
 ## Problem E
 ```{r}
-# using code from Bailey's chapter 15 computing corner
+# referenced code from Bailey's chapter 15 computing corner
 library(plm)
 summary(plm(medals~lag(medals) + population + GDP + host, data=olympicsdata, index=c("year", "country"), effect="twoways"))
 ```
@@ -545,7 +547,7 @@ There is! Bailey notes that dynamic models that do not include fixed effets are 
 
 ## Problem G
 ```{r}
-# Used code from Bailey's Chapter 15 compute corner
+# referenced code from Bailey's Chapter 15 computing corner
 # create lag variables
 olympicsdata$LagMedals <- c(NA, olympicsdata$medals[1:nrow(olympicsdata)-1])
 olympicsdata$LagPopulation <- c(NA, olympicsdata$population[1:nrow(olympicsdata)-1])
