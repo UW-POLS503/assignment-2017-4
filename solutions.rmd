@@ -441,40 +441,73 @@ I used the FittedQuadratic values that were already included in the dataset. The
 
 # Problem 13.3
 ```{r}
-bikedata <- read.csv("Ch13.Ex1.BikeShareData/BikeShare.csv")
+bond_data <- read.csv("Ch13.Ex3.JamesBondMoviesData/BondUpdate.csv")
 ```
 
 ## Problem A
 ```{r}
+ThreeA <- lm(GrossRev~ Rating + Budget, data=bond_data)
+summary(ThreeA)
+```
+
+
+```{r}
 # referenced code from Bailey's Chapter 13 computing corner
-OneA <- lm(trips ~ lowtemp + weekend, data=bikedata)
-summary(OneA)
-Errors <- resid(OneA)
+Errors <- resid(ThreeA)
 LagErrors<- c(NA, Errors[1:(length(Errors)-1)])
 AuxReg <- lm(Errors ~ LagErrors)
 summary(AuxReg)
 ```
-Since the coefficient on LagErrors is not statistically significant, we cannot say that there is autocorrelation in our errors.
+Since the coefficient on LagErrors is statistically significant, we can say that there is autocorrelation in our errors.
 
 ## Problem B
 ```{r}
-summary(lm(trips~lowtemp + weekend, data=bikedata))
-```
-
-```{r}
 # referenced code from Bailey's Chapter 13 computing corner
 Rho_hat <- summary(AuxReg)$coefficients[2]
-bikedata$lag_lowtemp <- c(NA, bikedata$lowtemp[1:nrow(bikedata) -1])
-bikedata$lag_trips <- c(NA, bikedata$trips[1:nrow(bikedata) -1])
-bikedata$lag_weeekend <- c(NA, bikedata$weekend[1:nrow(bikedata) -1])
+bond_data$LagGrossRev <- c(NA, bond_data$GrossRev[1:nrow(bond_data) -1])
+bond_data$LagRating <- c(NA, bond_data$Rating[1:nrow(bond_data) -1])
+bond_data$LagBudget <- c(NA, bond_data$Budget[1:nrow(bond_data) -1])
 
-bikedata$lowtemp_rho <- bikedata$lowtemp - Rho_hat*bikedata$lag_lowtemp
-bikedata$trips_rho <- bikedata$trips - Rho_hat*bikedata$lag_trips
-bikedata$weekend_rho <- bikedata$weekend - Rho_hat*bikedata$lag_weeekend
+bond_data$RhoGrossRev <- bond_data$GrossRev - Rho_hat*bond_data$LagGrossRev
+bond_data$RhoRating <- bond_data$Rating - Rho_hat*bond_data$LagRating
+bond_data$RhoBudget <- bond_data$Budget - Rho_hat*bond_data$LagBudget
 
-summary(lm(trips_rho~lowtemp_rho + weekend_rho, data=bikedata))
+summary(lm(RhoGrossRev ~ RhoRating + RhoBudget, data=bond_data))
 ```
-The coefficient on lowtemp_rho is a bit lower than the corresponding coefficient in the first regression. Bailey notes that it is ok that the coefficient in the rho transformed model is different than the coefficient in the original OLS (both are still not subject to bias in OLS because they are both estimates of the true beta). The standard error on the low temperature coefficient is larger in the part b regression than in the part a regression (24.85 vs 22.78, respectively), which is to be expected in the autocorrelation corrected model vs the non-corrected model.
+The coefficients on Rating and Budget are a bit higher than the corresponding coefficient in the first regression. Bailey notes that it is ok that the coefficient in the rho transformed model is different than the coefficient in the original OLS (both are still not subject to bias in OLS because they are both estimates of the true beta). The standard error on the Budget coefficient is larger in the part b regression than in the part a regression which is to be expected in the autocorrelation corrected model vs the non-corrected model. I would not have expected the Rating standard error to be smaller, but it is. The error term is no longer autocorrelated (the autocorrelation did go away).
+
+## Problem C
+```{r}
+# referenced code from Bailey's Chapter 13 computing corner
+ThreeC <- lm(GrossRev ~ lag(GrossRev) + Rating + Budget, data=bond_data)
+summary(ThreeC)
+```
+In the short term, a one unit increase in rating will increase GrossRev by 190.75. In the long run, a one unit increase in Rating will lead to a 439.219 unit increase in Gross Rev (calculation below).
+
+```{r}
+190.7528/(1- 0.5657)
+# [1] 439.219
+```
+
+## Problem D
+```{r}
+bond_data$ChangeRev <- bond_data$GrossRev - bond_data$LagGrossRev
+summary(lm(ChangeRev ~ lag(GrossRev) + Rating + Budget + lag(ChangeRev), data=bond_data))
+```
+Using the significance values from p. 473 of Bailey, GrossRev, Rating, and budget are all subject to nonstationarity.
+
+## Problem E
+```{r}
+# differenced
+summary(lm(I(GrossRev - lag(GrossRev)) ~ I(lag(GrossRev)-(lag(lag(GrossRev)))) + I(Rating - lag(Rating)) + I(Budget - lag(Budget)), data=bond_data))
+```
+The model now uses differenced independent and dependent variables, so we have one fewer data points with which to work with. For each one unit increase in first difference of Rating, there is a 201.13 unit increase in the first difference of GrossRev.
+
+## Problem F
+```{r}
+summary(lm(GrossRev ~ Rating + Budget + Actor, data=bond_data))
+```
+Including actor in the regression indicates that Sean Connery has the largest effect on revenue.
 
 # Problem 15.1
 ```{r}
@@ -574,15 +607,15 @@ years <- (olympicsdata$year[olympicsdata$LagID==olympicsdata$ID])
 
 summary(lm(medals_rho~ lag(medals_rho) + population_rho + gdp_rho + host_rho + factor(countries) + factor(years)))
 ```
-The coefficients on all three variables are quite a bit smaller in part g than in both of the other models. I was a bit confused by this at first. Bailey notes that using a dynamic model when there are correlated errors can cause the coefficients to become nullified (since the lagged dependent variable will do such a good job of explaining the dependent variable). The results in part G show that the significance of population, gdp, and host are much lower, but I would not have expected this to be the case since rho-deletion should have gotten rid of the error. The coefficients are certainly biased since the model includes both fixed effects and a lagged Y, so perhaps that bias is what caused the coefficients on host, GDP, and population to change so much.
+The coefficients on all three variables are quite a bit smaller in part g than in both of the other models. I was a bit confused by this at first. Bailey notes that using a dynamic model when there are correlated errors can cause the coefficients to become nullified (since the lagged dependent variable will do such a good job of explaining the dependent variable). The results in part G show that the significance of population, gdp, and host are much lower, but I would not have expected this to be the case since rho-deletion should have gotten rid of the error. The coefficients are certainly biased since the model includes both fixed effects and a lagged Y, so perhaps that bias is what caused the coefficients on host, GDP, and population to change so much. I think the most likely cause is that lag(medals_rho) was an omitted variable before. I think that the lagged count of medals is probably a far better predictor than GDP, host, and population, so it makes sense that those coefficients are basically 0 when we include lagged medals in the model.
 
-However, I think the most likely cause is that lag(medals_rho) was an omitted variable before. I think that the lagged count of medals is probably a far better predictor than GDP, host, and population, so it makes sense that those coefficients are basically 0 when we include lagged medals in the model.
+However, I think that I also want to be careful when interpreting these results since there is a unit root on the lagged Y variable. Bailey notes that a unit root can lead to incorrect inferences.
 
 ## Problem H
 The T parameter (the number of years of data we have for each country) indicates how biased our coefficients will be (higher T means less bias). In this case, T = 10.
 
 ## Probem I
-I think the dynamic model is more useful in this case. I would expect that the number of medals earned by a country in the last olympics is highly indicative of how many they will win the next time for myriad reasons, so we should include lagged medals on the right hand side of our equation. Even though we're worried about bias, we have 10 data points per country, which is not negligible, so perhaps bias isn't a huge issue for us in this case.
+I think the dynamic model is more useful in this case. I would expect that the number of medals earned by a country in the last olympics is highly indicative of how many they will win the next time for myriad reasons, so we should include lagged medals on the right hand side of our equation. Even though we're worried about bias, we have 10 data points per country, which is not negligible, so perhaps bias isn't a huge issue for us in this case. Since I am worried about nonstationarity, I think a differenced regression would be appropriate to use.
 
 ## Problem J
 The models with more data (i.e. those that do not include lagged variables) are likely to be more robust in my opinion. That's because each individual data point should hold less weight, all else being equal, if it is in a dataset that has many points as opposed to fewer points. However, I think we have enough data in either case that robustness shouldn't be a major concern.

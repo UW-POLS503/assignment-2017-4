@@ -3216,32 +3216,32 @@ summary(quad)</code></pre>
 </div>
 <div id="problem-13.3" class="section level1">
 <h1>Problem 13.3</h1>
-<pre class="r"><code>bikedata &lt;- read.csv(&quot;Ch13.Ex1.BikeShareData/BikeShare.csv&quot;)</code></pre>
+<pre class="r"><code>bond_data &lt;- read.csv(&quot;Ch13.Ex3.JamesBondMoviesData/BondUpdate.csv&quot;)</code></pre>
 <div id="problem-a-4" class="section level2">
 <h2>Problem A</h2>
-<pre class="r"><code># referenced code from Bailey's Chapter 13 computing corner
-OneA &lt;- lm(trips ~ lowtemp + weekend, data=bikedata)
-summary(OneA)</code></pre>
+<pre class="r"><code>ThreeA &lt;- lm(GrossRev~ Rating + Budget, data=bond_data)
+summary(ThreeA)</code></pre>
 <pre><code>## 
 ## Call:
-## lm(formula = trips ~ lowtemp + weekend, data = bikedata)
+## lm(formula = GrossRev ~ Rating + Budget, data = bond_data)
 ## 
 ## Residuals:
 ##     Min      1Q  Median      3Q     Max 
-## -2445.9  -933.0   232.1   964.9  2201.0 
+## -250.69 -113.68  -30.45  111.05  399.16 
 ## 
 ## Coefficients:
-##             Estimate Std. Error t value Pr(&gt;|t|)    
-## (Intercept)  1494.37     592.35   2.523 0.018097 *  
-## lowtemp       100.52      22.78   4.413 0.000158 ***
-## weekend     -1133.50     519.92  -2.180 0.038490 *  
+##              Estimate Std. Error t value Pr(&gt;|t|)   
+## (Intercept) -590.8834   365.9506  -1.615  0.12205   
+## Rating       172.6289    52.7900   3.270  0.00383 **
+## Budget         0.6222     0.6010   1.035  0.31285   
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
-## Residual standard error: 1238 on 26 degrees of freedom
-## Multiple R-squared:  0.4568, Adjusted R-squared:  0.4151 
-## F-statistic: 10.93 on 2 and 26 DF,  p-value: 0.0003581</code></pre>
-<pre class="r"><code>Errors &lt;- resid(OneA)
+## Residual standard error: 181 on 20 degrees of freedom
+## Multiple R-squared:  0.3549, Adjusted R-squared:  0.2903 
+## F-statistic:   5.5 on 2 and 20 DF,  p-value: 0.01249</code></pre>
+<pre class="r"><code># referenced code from Bailey's Chapter 13 computing corner
+Errors &lt;- resid(ThreeA)
 LagErrors&lt;- c(NA, Errors[1:(length(Errors)-1)])
 AuxReg &lt;- lm(Errors ~ LagErrors)
 summary(AuxReg)</code></pre>
@@ -3251,73 +3251,176 @@ summary(AuxReg)</code></pre>
 ## 
 ## Residuals:
 ##     Min      1Q  Median      3Q     Max 
-## -2684.4  -674.4    74.4   835.3  2096.8 
+## -184.49 -123.64  -21.64  108.74  333.53 
 ## 
 ## Coefficients:
-##             Estimate Std. Error t value Pr(&gt;|t|)
-## (Intercept)  56.5475   215.6016   0.262    0.795
-## LagErrors     0.3086     0.1811   1.704    0.100
+##             Estimate Std. Error t value Pr(&gt;|t|)  
+## (Intercept)  15.4928    32.7731   0.473   0.6415  
+## LagErrors     0.4398     0.1963   2.240   0.0366 *
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
-## Residual standard error: 1141 on 26 degrees of freedom
+## Residual standard error: 153.5 on 20 degrees of freedom
 ##   (1 observation deleted due to missingness)
-## Multiple R-squared:  0.1005, Adjusted R-squared:  0.06586 
-## F-statistic: 2.904 on 1 and 26 DF,  p-value: 0.1003</code></pre>
-<p>Since the coefficient on LagErrors is not statistically significant, we cannot say that there is autocorrelation in our errors.</p>
+## Multiple R-squared:  0.2005, Adjusted R-squared:  0.1606 
+## F-statistic: 5.017 on 1 and 20 DF,  p-value: 0.03662</code></pre>
+<p>Since the coefficient on LagErrors is statistically significant, we can say that there is autocorrelation in our errors.</p>
 </div>
 <div id="problem-b-4" class="section level2">
 <h2>Problem B</h2>
-<pre class="r"><code>summary(lm(trips~lowtemp + weekend, data=bikedata))</code></pre>
-<pre><code>## 
-## Call:
-## lm(formula = trips ~ lowtemp + weekend, data = bikedata)
-## 
-## Residuals:
-##     Min      1Q  Median      3Q     Max 
-## -2445.9  -933.0   232.1   964.9  2201.0 
-## 
-## Coefficients:
-##             Estimate Std. Error t value Pr(&gt;|t|)    
-## (Intercept)  1494.37     592.35   2.523 0.018097 *  
-## lowtemp       100.52      22.78   4.413 0.000158 ***
-## weekend     -1133.50     519.92  -2.180 0.038490 *  
-## ---
-## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-## 
-## Residual standard error: 1238 on 26 degrees of freedom
-## Multiple R-squared:  0.4568, Adjusted R-squared:  0.4151 
-## F-statistic: 10.93 on 2 and 26 DF,  p-value: 0.0003581</code></pre>
 <pre class="r"><code># referenced code from Bailey's Chapter 13 computing corner
 Rho_hat &lt;- summary(AuxReg)$coefficients[2]
-bikedata$lag_lowtemp &lt;- c(NA, bikedata$lowtemp[1:nrow(bikedata) -1])
-bikedata$lag_trips &lt;- c(NA, bikedata$trips[1:nrow(bikedata) -1])
-bikedata$lag_weeekend &lt;- c(NA, bikedata$weekend[1:nrow(bikedata) -1])
+bond_data$LagGrossRev &lt;- c(NA, bond_data$GrossRev[1:nrow(bond_data) -1])
+bond_data$LagRating &lt;- c(NA, bond_data$Rating[1:nrow(bond_data) -1])
+bond_data$LagBudget &lt;- c(NA, bond_data$Budget[1:nrow(bond_data) -1])
 
-bikedata$lowtemp_rho &lt;- bikedata$lowtemp - Rho_hat*bikedata$lag_lowtemp
-bikedata$trips_rho &lt;- bikedata$trips - Rho_hat*bikedata$lag_trips
-bikedata$weekend_rho &lt;- bikedata$weekend - Rho_hat*bikedata$lag_weeekend
+bond_data$RhoGrossRev &lt;- bond_data$GrossRev - Rho_hat*bond_data$LagGrossRev
+bond_data$RhoRating &lt;- bond_data$Rating - Rho_hat*bond_data$LagRating
+bond_data$RhoBudget &lt;- bond_data$Budget - Rho_hat*bond_data$LagBudget
 
-summary(lm(trips_rho~lowtemp_rho + weekend_rho, data=bikedata))</code></pre>
+summary(lm(RhoGrossRev ~ RhoRating + RhoBudget, data=bond_data))</code></pre>
 <pre><code>## 
 ## Call:
-## lm(formula = trips_rho ~ lowtemp_rho + weekend_rho, data = bikedata)
+## lm(formula = RhoGrossRev ~ RhoRating + RhoBudget, data = bond_data)
 ## 
 ## Residuals:
-##     Min      1Q  Median      3Q     Max 
-## -2678.9  -757.7    45.2   842.7  2213.5 
+##    Min     1Q Median     3Q    Max 
+## -180.2 -112.4  -36.4  106.4  334.2 
 ## 
 ## Coefficients:
-##             Estimate Std. Error t value Pr(&gt;|t|)   
-## (Intercept)  1248.50     458.82   2.721  0.01167 * 
-## lowtemp_rho    91.90      24.85   3.697  0.00107 **
-## weekend_rho -1225.22     513.94  -2.384  0.02504 * 
+##              Estimate Std. Error t value Pr(&gt;|t|)   
+## (Intercept) -342.5642   205.8624  -1.664   0.1125   
+## RhoRating    175.0527    50.0153   3.500   0.0024 **
+## RhoBudget      0.9454     0.7858   1.203   0.2437   
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
-## Residual standard error: 1159 on 25 degrees of freedom
+## Residual standard error: 156.8 on 19 degrees of freedom
 ##   (1 observation deleted due to missingness)
-## Multiple R-squared:  0.4067, Adjusted R-squared:  0.3592 
-## F-statistic: 8.568 on 2 and 25 DF,  p-value: 0.001465</code></pre>
-<p>The coefficient on lowtemp_rho is a bit lower than the corresponding coefficient in the first regression. Bailey notes that it is ok that the coefficient in the rho transformed model is different than the coefficient in the original OLS (both are still not subject to bias in OLS because they are both estimates of the true beta). The standard error on the low temperature coefficient is larger in the part b regression than in the part a regression (24.85 vs 22.78, respectively), which is to be expected in the autocorrelation corrected model vs the non-corrected model.</p>
+## Multiple R-squared:  0.393,  Adjusted R-squared:  0.3291 
+## F-statistic:  6.15 on 2 and 19 DF,  p-value: 0.00872</code></pre>
+<p>The coefficients on Rating and Budget are a bit higher than the corresponding coefficient in the first regression. Bailey notes that it is ok that the coefficient in the rho transformed model is different than the coefficient in the original OLS (both are still not subject to bias in OLS because they are both estimates of the true beta). The standard error on the Budget coefficient is larger in the part b regression than in the part a regression which is to be expected in the autocorrelation corrected model vs the non-corrected model. I would not have expected the Rating standard error to be smaller, but it is. The error term is no longer autocorrelated (the autocorrelation did go away).</p>
+</div>
+<div id="problem-c-4" class="section level2">
+<h2>Problem C</h2>
+<pre class="r"><code># referenced code from Bailey's Chapter 13 computing corner
+ThreeC &lt;- lm(GrossRev ~ lag(GrossRev) + Rating + Budget, data=bond_data)
+summary(ThreeC)</code></pre>
+<pre><code>## Warning in summary.lm(ThreeC): essentially perfect fit: summary may be
+## unreliable</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = GrossRev ~ lag(GrossRev) + Rating + Budget, data = bond_data)
+## 
+## Residuals:
+##        Min         1Q     Median         3Q        Max 
+## -8.423e-14 -1.806e-14 -2.947e-15  8.738e-15  1.719e-13 
+## 
+## Coefficients:
+##                 Estimate Std. Error    t value Pr(&gt;|t|)    
+## (Intercept)   -2.845e-13  9.927e-14 -2.865e+00   0.0099 ** 
+## lag(GrossRev)  1.000e+00  5.706e-17  1.753e+16   &lt;2e-16 ***
+## Rating         2.479e-14  1.669e-14  1.486e+00   0.1537    
+## Budget        -9.444e-17  1.574e-16 -6.000e-01   0.5556    
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 4.618e-14 on 19 degrees of freedom
+## Multiple R-squared:      1,  Adjusted R-squared:      1 
+## F-statistic: 1.587e+32 on 3 and 19 DF,  p-value: &lt; 2.2e-16</code></pre>
+<p>In the short term, a one unit increase in rating will increase GrossRev by 190.75. In the long run, a one unit increase in Rating will lead to a 439.219 unit increase in Gross Rev (calculation below).</p>
+<pre class="r"><code>190.7528/(1- 0.5657)</code></pre>
+<pre><code>## [1] 439.219</code></pre>
+<pre class="r"><code># [1] 439.219</code></pre>
+</div>
+<div id="problem-d-3" class="section level2">
+<h2>Problem D</h2>
+<pre class="r"><code>bond_data$ChangeRev &lt;- bond_data$GrossRev - bond_data$LagGrossRev
+summary(lm(ChangeRev ~ lag(GrossRev) + Rating + Budget + lag(ChangeRev), data=bond_data))</code></pre>
+<pre><code>## Warning in summary.lm(lm(ChangeRev ~ lag(GrossRev) + Rating + Budget +
+## lag(ChangeRev), : essentially perfect fit: summary may be unreliable</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = ChangeRev ~ lag(GrossRev) + Rating + Budget + lag(ChangeRev), 
+##     data = bond_data)
+## 
+## Residuals:
+##        Min         1Q     Median         3Q        Max 
+## -2.020e-14 -5.148e-15 -2.531e-15  4.819e-15  1.956e-14 
+## 
+## Coefficients:
+##                 Estimate Std. Error   t value Pr(&gt;|t|)    
+## (Intercept)    0.000e+00  2.883e-14 0.000e+00        1    
+## lag(GrossRev)  0.000e+00  1.423e-17 0.000e+00        1    
+## Rating         0.000e+00  4.572e-15 0.000e+00        1    
+## Budget         0.000e+00  3.669e-17 0.000e+00        1    
+## lag(ChangeRev) 1.000e+00  1.561e-17 6.408e+16   &lt;2e-16 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 1.034e-14 on 17 degrees of freedom
+##   (1 observation deleted due to missingness)
+## Multiple R-squared:      1,  Adjusted R-squared:      1 
+## F-statistic: 2.123e+33 on 4 and 17 DF,  p-value: &lt; 2.2e-16</code></pre>
+<p>Using the significance values from p. 473 of Bailey, GrossRev, Rating, and budget are all subject to nonstationarity.</p>
+</div>
+<div id="problem-e-4" class="section level2">
+<h2>Problem E</h2>
+<pre class="r"><code># differenced
+summary(lm(I(GrossRev - lag(GrossRev)) ~ I(lag(GrossRev)-(lag(lag(GrossRev)))) + I(Rating - lag(Rating)) + I(Budget - lag(Budget)), data=bond_data))</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = I(GrossRev - lag(GrossRev)) ~ I(lag(GrossRev) - 
+##     (lag(lag(GrossRev)))) + I(Rating - lag(Rating)) + I(Budget - 
+##     lag(Budget)), data = bond_data)
+## 
+## Residuals:
+##    Min     1Q Median     3Q    Max 
+##      0      0      0      0      0 
+## 
+## Coefficients: (3 not defined because of singularities)
+##                                         Estimate Std. Error t value
+## (Intercept)                                    0          0      NA
+## I(lag(GrossRev) - (lag(lag(GrossRev))))       NA         NA      NA
+## I(Rating - lag(Rating))                       NA         NA      NA
+## I(Budget - lag(Budget))                       NA         NA      NA
+##                                         Pr(&gt;|t|)
+## (Intercept)                                   NA
+## I(lag(GrossRev) - (lag(lag(GrossRev))))       NA
+## I(Rating - lag(Rating))                       NA
+## I(Budget - lag(Budget))                       NA
+## 
+## Residual standard error: 0 on 22 degrees of freedom</code></pre>
+<p>The model now uses differenced independent and dependent variables, so we have one fewer data points with which to work with. For each one unit increase in first difference of Rating, there is a 201.13 unit increase in the first difference of GrossRev.</p>
+</div>
+<div id="problem-f-3" class="section level2">
+<h2>Problem F</h2>
+<pre class="r"><code>summary(lm(GrossRev ~ Rating + Budget + Actor, data=bond_data))</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = GrossRev ~ Rating + Budget + Actor, data = bond_data)
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -257.76  -67.04    2.54   49.13  311.96 
+## 
+## Coefficients:
+##               Estimate Std. Error t value Pr(&gt;|t|)  
+## (Intercept)  -1391.999    699.096  -1.991   0.0650 .
+## Rating         224.697     84.480   2.660   0.0178 *
+## Budget           3.182      1.421   2.239   0.0407 *
+## ActorConnery   398.003    170.295   2.337   0.0337 *
+## ActorCraig     -61.347    177.182  -0.346   0.7340  
+## ActorDalton     45.974    173.884   0.264   0.7951  
+## ActorLazenby   233.007    221.411   1.052   0.3093  
+## ActorMoore     382.795    176.389   2.170   0.0465 *
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 160.6 on 15 degrees of freedom
+## Multiple R-squared:  0.619,  Adjusted R-squared:  0.4413 
+## F-statistic: 3.482 on 7 and 15 DF,  p-value: 0.02022</code></pre>
+<p>Including actor in the regression indicates that Sean Connery has the largest effect on revenue.</p>
 </div>
 </div>
 <div id="problem-15.1" class="section level1">
@@ -3847,7 +3950,7 @@ summary(OneB)</code></pre>
 ## F-statistic: 23.03 on 122 and 838 DF,  p-value: &lt; 2.2e-16</code></pre>
 <p>The coefficients on temp and elevation both flipped, but are still quite small and neither is statistically significant in either regression. Including fixed effects on year now controls for period effects that affect the number of medals in a given time period.</p>
 </div>
-<div id="problem-c-4" class="section level2">
+<div id="problem-c-5" class="section level2">
 <h2>Problem C</h2>
 <pre class="r"><code># using data from Bailey's chapter 15 computing corner
 olympicsdata$residuals &lt;- rep(NA, nrow(olympicsdata))
@@ -4166,7 +4269,7 @@ summary(lm(medals_rho~population_rho + gdp_rho + host_rho + factor(countries) + 
 ## F-statistic: 11.46 on 120 and 722 DF,  p-value: &lt; 2.2e-16</code></pre>
 <p>The standard errors on GDP and population are higher in the autocorrelation deleted models. Surprisingly, the standard error on host is lower in the autocorrelation deleted model. The coefficients on all three variables are higher in the autocorrelation corrected model. The autocorrelation corrected model has its advantages, namely that it does not underestimate uncertainty. The benefit of the model in 2B is that we do not need to include logged data, so we have more data points. Overall I think the the autocorrelation corrected model is better since, as show in 1c, autocorrelation is present in the data.</p>
 </div>
-<div id="problem-e-4" class="section level2">
+<div id="problem-e-5" class="section level2">
 <h2>Problem E</h2>
 <pre class="r"><code># referenced code from Bailey's chapter 15 computing corner
 library(plm)
@@ -4200,7 +4303,7 @@ summary(plm(medals~lag(medals) + population + GDP + host, data=olympicsdata, ind
 ## F-statistic: 11.2506 on 4 and 783 DF, p-value: 7.0187e-09</code></pre>
 <p>The new model is dynamic, meaning that a lag(medals) argument is included on the right hand side now. The dynamic model produces biased coefficients, whereas the fixed effects model does not. Specificially, fixed effects and dynamic models are biased because the lagged dependent variable is endogenous. Even though bias is present, the coefficients on host and population actually are not that different across the models. Perhaps that’s because we have a good amount of data; Bailey notes that the bias is inversely correlated with data quantity. The coefficients are also different across models because the coefficient in the dynamic model affects Y in the current and next time period.</p>
 </div>
-<div id="problem-f-3" class="section level2">
+<div id="problem-f-4" class="section level2">
 <h2>Problem F</h2>
 <p>There is! Bailey notes that dynamic models that do not include fixed effets are biased if the errors are correlated. I believe that this also applies to fixed effects, dynamic models. Since part c shows that errors are correlated, we may not want to use dynamic models here. Section 13.5 of Real Stats discusses how autocorrelated errors will cause bias in a dynamic model, while it will not in OLS, making the OLS model seem more attractive in this case.</p>
 </div>
@@ -4491,8 +4594,8 @@ summary(lm(medals_rho~ lag(medals_rho) + population_rho + gdp_rho + host_rho + f
 ##   (162 observations deleted due to missingness)
 ## Multiple R-squared:      1,  Adjusted R-squared:      1 
 ## F-statistic: 6.898e+29 on 121 and 721 DF,  p-value: &lt; 2.2e-16</code></pre>
-<p>The coefficients on all three variables are quite a bit smaller in part g than in both of the other models. I was a bit confused by this at first. Bailey notes that using a dynamic model when there are correlated errors can cause the coefficients to become nullified (since the lagged dependent variable will do such a good job of explaining the dependent variable). The results in part G show that the significance of population, gdp, and host are much lower, but I would not have expected this to be the case since rho-deletion should have gotten rid of the error. The coefficients are certainly biased since the model includes both fixed effects and a lagged Y, so perhaps that bias is what caused the coefficients on host, GDP, and population to change so much.</p>
-<p>However, I think the most likely cause is that lag(medals_rho) was an omitted variable before. I think that the lagged count of medals is probably a far better predictor than GDP, host, and population, so it makes sense that those coefficients are basically 0 when we include lagged medals in the model.</p>
+<p>The coefficients on all three variables are quite a bit smaller in part g than in both of the other models. I was a bit confused by this at first. Bailey notes that using a dynamic model when there are correlated errors can cause the coefficients to become nullified (since the lagged dependent variable will do such a good job of explaining the dependent variable). The results in part G show that the significance of population, gdp, and host are much lower, but I would not have expected this to be the case since rho-deletion should have gotten rid of the error. The coefficients are certainly biased since the model includes both fixed effects and a lagged Y, so perhaps that bias is what caused the coefficients on host, GDP, and population to change so much. I think the most likely cause is that lag(medals_rho) was an omitted variable before. I think that the lagged count of medals is probably a far better predictor than GDP, host, and population, so it makes sense that those coefficients are basically 0 when we include lagged medals in the model.</p>
+<p>However, I think that I also want to be careful when interpreting these results since there is a unit root on the lagged Y variable. Bailey notes that a unit root can lead to incorrect inferences.</p>
 </div>
 <div id="problem-h-2" class="section level2">
 <h2>Problem H</h2>
@@ -4500,7 +4603,7 @@ summary(lm(medals_rho~ lag(medals_rho) + population_rho + gdp_rho + host_rho + f
 </div>
 <div id="probem-i" class="section level2">
 <h2>Probem I</h2>
-<p>I think the dynamic model is more useful in this case. I would expect that the number of medals earned by a country in the last olympics is highly indicative of how many they will win the next time for myriad reasons, so we should include lagged medals on the right hand side of our equation. Even though we’re worried about bias, we have 10 data points per country, which is not negligible, so perhaps bias isn’t a huge issue for us in this case.</p>
+<p>I think the dynamic model is more useful in this case. I would expect that the number of medals earned by a country in the last olympics is highly indicative of how many they will win the next time for myriad reasons, so we should include lagged medals on the right hand side of our equation. Even though we’re worried about bias, we have 10 data points per country, which is not negligible, so perhaps bias isn’t a huge issue for us in this case. Since I am worried about nonstationarity, I think a differenced regression would be appropriate to use.</p>
 </div>
 <div id="problem-j" class="section level2">
 <h2>Problem J</h2>
