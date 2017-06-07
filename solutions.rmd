@@ -103,13 +103,14 @@ If districts in which the teacher unions are more powerful are more able to get 
 FiveB <- lm(LnAvgSalary ~ CycleSwitch + AfterSwitch + AfterCycleSwitch, data=school_data)
 summary(FiveB)
 ```
-The coefficients tell us several things. The coefficient on CycleSwitch tells us the difference in the intercepts between the districts that switched and did not switch. That is, among districts that switched, LnAvgSalary was .024 lower than among districts that did not switch. The coefficient on AfterSwtich provides the difference in the conditional mean of Y after 2007 versus before 2007. The interaction term provides the difference in difference. In the post-2007 time period, the change in average teacher salary among districts that switched to OnCycle elections was .86% lower than the change in districts that did not switch.
+The coefficients tell us several things. The coefficient on CycleSwitch tells us the difference in the intercepts between the districts that switched and did not switch. That is, among districts that switched, the conditional mean of LnAvgSalary before 2007 is .024 lower than among districts that did not switch. The coefficient on AfterSwtich provides the difference in the conditional mean of Y after 2007 versus before 2007. The interaction term provides the difference in difference. In the post-2007 time period, the change in average teacher salary among districts that switched to OnCycle elections was .86% lower than the change in districts that did not switch.
 
-The effect of moving to on-cycle elections on salary appears to be negative. That is, on-cycle elections made teacher salaries increase by a smaller amount than they otherwise would have if the districts that switched had not switched. I do not know if we can say anything about the type of districts that switched. The salaries in all districts are higher after 2007 than before 2007, but the increase was more marked in districts that did not switch.
+The effect of moving to on-cycle elections on salary appears to be negative. That is, on-cycle elections made teacher salaries increase by a smaller amount than they otherwise would have if the districts that switched had not switched. Among districts that switched, the average teacher salary likely increased after the switch (though we can't say for sure since the confidence intervals overlap). The teacher salaries did not increase by as much as the increase among districts that did not switch.
 
 
 ## Problem C
 ```{r}
+# Referenced Bailey's "Computing Corner" for Chapter 8 to write this code
 FiveC <- lm(LnAvgSalary ~ OnCycle + factor(DistNumber), data=school_data)
 summary(FiveC)
 ```
@@ -118,6 +119,7 @@ The results show that the conditional mean of LnAvgSalary is .08% higher among d
 
 ## Problem D
 ```{r}
+# Referenced Bailey's "Computing Corner" for Chapter 8 to write this code
 FiveD <- lm(LnAvgSalary ~ OnCycle + factor(DistNumber) + factor(Year), data=school_data)
 summary(FiveD)
 ```
@@ -130,7 +132,7 @@ Since district fixed effects are included, any characteristics that are specific
 Period effects that affect all districts are controlled for by including Year fixed effects.
 
 ## Problem E
-No. We would certainly still be able to compare the conditional mean of LnAvgSalary among districts that are on or off cycle. However, that comparison would not be particularly useful, unless we included some omitted variables (e.g. power of teacher unions). The useful part of using the diff in diff or two-way fixed effects approach is that we are able to see how salaries changed in districts that did not switch versus districts that did switch. We can then use the comparison to determine the effect of holding elections on cycle. The comparison is useful as long as we are comfortable assuming that the change in teacher salaries among districts that did switch would have mirrored the change among districts that did not switch had the districts that switched not switched.
+No. We would certainly still be able to compare the conditional mean of LnAvgSalary among districts that are on or off cycle. However, that comparison would not be particularly useful, unless we included some omitted variables (e.g. power of teacher unions). The useful part of using the diff in diff or two-way fixed effects approach is that we are able to see how salaries changed in districts that did not switch versus districts that did switch. We can then use the comparison to determine the effect of holding elections on cycle. The comparison is useful as long as we are comfortable assuming that the change in teacher salaries among districts that did switch would have mirrored the change among districts that did not switch had the districts that switched not switched. 
 
 
 # Problem 11.3
@@ -139,7 +141,7 @@ congress_data <- read.csv("Ch11.Ex3.CongressionalElectionsData/CongressRD.csv")
 ```
 
 ## Problem A
-As mentioned in the equation, politicians may try to appeal to median voters, as opposed to strictly adhering to their party's views on all issues. In addition, there are some omitted variables that could change a politician's ideology regardless of party (e.g. a Republican that loves the outdoors may be more likely to support environmental regulations than other republicans, so love of the outdoors could be an omitted variable).
+As mentioned in the equation, politicians may try to appeal to median voters, as opposed to strictly adhering to their party's views on all issues. In addition, there are some other omitted variables that could change a politician's ideology regardless of party (e.g. a Republican that loves the outdoors may be more likely to support environmental regulations than other republicans, so love of the outdoors could be an omitted variable).
 
 ## Problem B
 RD models can fight endogeneity because they do not require that politicial party not be correlated with the error term. The inclusion of an assignment variable on the right hand side of the equation eliminates any potential correlation between the error terms and political party.
@@ -172,7 +174,7 @@ simple_rd <- lm(Ideology ~ GOPwin2010 + GOP2party2010, data=congress_data)
 summary(simple_rd)
 # Citation: Bailey's Chapter 8 Computing Corner
 ```
-The intercept coefficient states that the non-treatment group regression line crosses the y-axis at -.48. the treatment group regression line crosses the y-axis at .52 (1-.48). The conditional mean Ideology score is 1 higher in districts in which a republican narrowly won versus a district where a republican narrowly lost, indicating an effect of 1 due to being republican. The coeffecient on GOP2party2010 states that the slope of each line is .23; for each one unit increase in GOP2party2010, there is a corresponding .23 increase in the conditional mean ideology score.
+The intercept coefficient states that the non-treatment group (where GOPwin2010=0) regression line crosses the y-axis at -.48. The treatment group (where GOPwin2010=1) regression line crosses the y-axis at .52 (1-.48). The conditional mean Ideology score is 1 higher in districts in which a republican narrowly won versus a district where a republican narrowly lost, indicating an effect of 1 due to being republican. The coeffecient on GOP2party2010 states that the slope of each line is .23; for each one unit increase in GOP2party2010, there is a corresponding .23 increase in the conditional mean ideology score.
 
 
 ## Problem F
@@ -181,6 +183,7 @@ $$
 \text{Ideology} = \beta_0 + \beta_{1}\text{GOPwin2010}_i + \beta_{2}\text{(GOP2party2010}_i - .5) + \beta_3\text{(GOP2party2010}_i - .5)\text{GOPwin2010}_i +  \epsilon_i
 $$
 ```{r}
+congress_data$assignment_var <- congress_data$GOP2party2010 -.5
 diff_slopes <- lm(Ideology ~ GOPwin2010 + assignment_var + assignment_var*GOPwin2010, data=congress_data)
 summary(diff_slopes)
 ```
@@ -249,31 +252,29 @@ ggplot(congress_data, aes(x=GOP2party2010, y=Ideology)) + geom_point() + geom_li
 ```
 
 ### Democrat with GOP2party2010 = 0
-The fitted value for a democrat with GOP2party2010=0 is -0.841885.
-
-```{r}
- -0.57758 - (.5 * 0.52861)
-# [1] -0.841885
-```
+The value is given by our regression. The fitted value for a democrat with GOP2party2010=0 is -0.57758.
 
 ### Democrat with GOP2party2010=.5
-The value is given by our regression. It is the coefficient on beta-knot, approximately -0.58.
-
-### Republican with GOP2party2010=.5
-The value is also given by our regression. It is the coefficient on beta-knot + the coefficient on GOPwin2010, approximately .65. 
+The value is given by our regression. It is the coefficient on beta-knot, approximately -.31.
 ```{r}
--0.57758 + 1.2262
-# [1] 0.64862
+-0.57758 + (.5 * 0.52861)
+[1] -0.313275
 ```
-
-### Republican with GOPparty2010=1
-We can calculate the value similarly to how we calculated the fitted ideology score for a democrat where GOP2party2010=0. The ideology score for a republican where GOP2party2010=1 is about .67.
+### Republican with GOP2party2010=.5
+The value is also given by our regression. It is the coefficient on beta-knot + the coefficient on GOPwin2010, approximately .67. 
 ```{r}
-0.64862 + (.5 * (0.52861 - 0.48933))
+-0.57758 + 1.2262 + .5* (0.52861 - 0.48933)
 # [1] 0.66826
 ```
 
-The fitted values are very similar to the fitted values from part F for republicans. They are quite a bit lower for democrats in part G versus part F. I would guess that the values are more similar for Republicans than for Democrats in parts F and G because the slope for Republicans is much lower than the slope for Democrats, so changing the GOP2party2010 values has less of an effect on the Republican fitted values than on the Democrat fitted values.
+### Republican with GOPparty2010=1
+We can calculate the value similarly to how we calculated the fitted ideology score for a democrat where GOP2party2010=0. The ideology score for a republican where GOP2party2010=1 is about .69.
+```{r}
+0.64862 + (1 * (0.52861 - 0.48933))
+# [1] 0.6879
+```
+
+The coefficients are basically just shifted because our graph is no longer centered around the y-intercept. So the fitted values are the same, but the intercept coefficients are different since the regression lines now cross the intercept at different points.
 
 ## Problem H
 Bailey discusses a potential test to determine if clustering is present. Bailey suggests creating a histogram, which is a useful, easy check to see if clustering exists. Plotting a histogram does not seem to identify an obvious clustering.
@@ -339,7 +340,7 @@ window <- subset(window, GOP2party2010 < .6)
 window_model <- lm(Ideology ~ GOPwin2010 + GOP2party2010 + GOP2party2010*GOPwin2010  + ChildPoverty + MedianIncome + Obama2008 + WhitePct, data=window)
 summary(window_model)
 ```
-The coefficient on GOP2party2010 is slightly lower than the model from part j (1.201 vs 1.051). The difference in slopes in the treated and non-treated groups is slightly lower ( -.6745 vs -.1771).
+The coefficient on GOP2party2010 is slightly higher than the model from part j (1.201 vs 1.051). The difference in slopes in the treated and non-treated groups is slightly lower ( -.6745 vs -.1771).
 
 ## Problem M
 The model in part l is the most credible. There are a good number of data points in the narrow window and all it includes several control variables that should be controlled for. The data does not seem to need a quadratic fit, especially in such a narrow window.
