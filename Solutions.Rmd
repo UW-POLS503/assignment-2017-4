@@ -1,0 +1,659 @@
+---
+title: "Assignment 4"
+author: "Jeffrey Grove"
+date: "June 1, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(rio)
+library(broom)
+library(plm)
+library(car)
+library(AER)
+library(ggplot2)
+library(modelr)
+library(rdrobust)
+```
+#Question 8.2
+
+```{r}
+
+peace <- import ("data/PeaceCorpsHW.dta")
+
+```
+
+###(a)
+
+I think there will be a positive relationship between unemployment rate and applications for the peace core.  As more people become unemployed, people will look more towards non-traditional means of living which they may not have considered if gainfully employed.
+
+###(b) 
+
+```{r}
+
+pool1 <- lm (appspc ~ unemployrate + yr1 + yr2 + yr3 + yr4 + yr5 + yr6, data = peace)
+
+tidy(pool1)
+
+```
+We do not find significance for the unemployment rate at the alpha equals 0.05 level.  Therefore we cannot reject the null hypothesis that there is no relationship between unemployment and applications for the peace corps.
+
+
+
+###(c)
+
+```{r}
+
+ggplot (data = peace) +
+
+  geom_point (mapping = aes(y = appspc, x = unemployrate, color = stateshort)) 
+
+
+
+```
+
+
+```{r}
+
+peace1 <- peace %>%
+
+  filter (appspc < 250)
+
+ggplot (data = peace1) +
+
+  geom_point (mapping = aes (x = unemployrate, y = appspc, color = stateshort))
+
+```
+There still appears to be no relationship in the new data.  We can simply see the data more clearly with the outliers removed.
+
+###(d) 
+```{r}
+
+pool2 <- lm (appspc ~ unemployrate + yr1 + yr2 + yr3 + yr4 + yr5 + yr6, data = peace1)
+
+tidy(pool2)
+
+```
+We still do not find significance at the alpha equals 0.05 level and thus cannot reject the null hypothesis.  
+
+###(e)
+```{r}
+peaceLSDV <- 
+  lm(appspc ~ unemployrate + yr1 + yr2 + yr3 
+     + yr4 + yr5 + yr6 + factor(state), data = peace1)
+
+tidy(peaceLSDV)
+```
+We still do not find a significant effect of unemployment rate on the applications per capita and thus cannot reject the null hypothesis.  However, these results are preferable as they take into account state level fixed effects which the prior model excludes.
+
+###(f) Two way fixed effects
+
+```{r}
+
+twopeace <- plm(appspc ~ unemployrate, 
+                data = peace1, 
+                index = c("state", "year"), 
+                model = "within", 
+                effect = "twoways")
+
+tidy(twopeace)
+
+```
+We find the same result with the two way fixed effects model, as a two way LSDV and two way demeaned model should produce the same results!
+
+#Question 8.5
+```{r}
+Texas <- import("data/TexasSchoolBoard.dta")
+```
+
+###(a)
+
+```{r}
+TxReg1 <- lm(LnAvgSalary ~ OnCycle, data = Texas)
+
+tidy(TxReg1)
+```
+We find a highly significant result, however there may be bias in the data, given that a powerful teacher's union would both be able to set the election schedule and negotiate for better salaries.  As such, we should view these results with some skepticism.
+
+###(b)
+
+```{r}
+TxReg2 <- lm(LnAvgSalary ~ CycleSwitch + AfterSwitch + AfterCycleSwitch, data = Texas)
+
+tidy(TxReg2)
+```
+Our variable of interest is AfterCycleSwitch, for which we do not find statistical significance at the alpha equals 0.05 level, and thus cannot reject the null hypothesis.  The districts which switched do experience a decline in salary of 2.3 percent, which we interpret from the coefficient on the cycle switch model.  There was a statistically signficant positive change in salary after the switch of just under 1 percent (since this is a logged model).
+
+###(c)
+
+```{r}
+TxFixed <- plm(LnAvgSalary ~ OnCycle,data = Texas, index = c("DistNumber"), model = "within")
+
+tidy(TxFixed)
+```
+We find no significant result for our one-way fixed effects model, and thus cannot reject the null hypothesis.  This model does not account for time trends which might affect districts, it only accounts for district ID number.
+
+```{r}
+Tx2way <- plm(LnAvgSalary ~ OnCycle + factor(Year), data = Texas, index = c("DistNumber"), model = "within")
+
+tidy(Tx2way)
+```
+
+We find that OnCycle has a significan effect on average salary.  This model accounts for preexisting conditions of switcher districts, as it compares data within districts, rather than grouping all the data together.  It further accounts for the effect of post switch years on all districts as we include the fixed effects of all years.
+
+###(e)
+We would not be able to estimate the effect of OnCycle for this subset of data, as the switch occurs in 2007. We cannot compare districts to themselves pre- and post-switch, and thus cannot determine the effects of being on-cycle within districts.
+
+#Question 11.3
+```{r}
+congress <- import("data/congressRD.dta")
+
+```
+
+###(a)
+
+The district of the congressional member might effect both their ideology and the political party.  District level effects include overall level of support for the national party, poeverty, and whiteness.
+
+###(b)
+
+An RD model might fight endogeneity as we can utilize the difference centering around whether a GOP or Democratic congressperson was elected, as districts with close votes should be relatively similar to one another in most respects as the distribution over the discontinuity is quasi-random.  This helps control for district level effects.
+
+###(c)
+```{r}
+ggplot(data = congress) +
+  geom_point(mapping = aes(x = GOP2party2010, y = Ideology), na.rm = TRUE) +
+  geom_vline(xintercept = 0.50)
+
+```
+ The RD will likely indicate that there is an ideological difference between the two parties.
+ 
+ ###(d)
+ 
+ $$Ideology_i = \beta_0 + \beta_1*GOPwin2010_i + \beta_2*(GOP2party2010_{1i} - 0.50) + \epsilon_i$$
+ Ideology is the variable of interest which we are looking to explain with our other variables.  $\beta_0$ is the intercept, or the average democratic ideology at the cutoff point.  We find the average GOP ideology at the cutoff by adding $\beta_0$ to $\beta_1$.  $\beta_2$ is the slope, which is equal for both the democrats and GOP in the basic RDD design.  $\epsilon_i$ is, of course, the error term, which in the RDD design, we assume is constant for both groups.
+ 
+###(e)
+```{r}
+congress <- congress %>%
+  mutate(GOPwin2010 = factor(GOPwin2010))
+
+congRD1 <- lm(Ideology ~ GOPwin2010 + I(GOP2party2010 - 0.50), data = congress)
+
+tidy(congRD1)
+```
+We find that democrats at the intercept have an average Ideology score of -0.35, while repulicans at the intercept have an average ideology of the coefficients $Intercept + GOPwin2010$, which is roughly 0.65.  Each percentage change in the vote share changes ideology by 0.23 for both parties in this model.
+
+###(f)
+
+```{r}
+congress <- congress %>%
+  mutate(adjGOP = GOP2party2010 - 0.5) %>%
+  mutate(GOPInt = adjGOP * as.numeric(GOPwin2010))
+
+congVAR <- lm(Ideology ~ GOPwin2010 * adjGOP, data = congress)
+
+tcongVAR <- tidy(congVAR)
+
+tcongVAR
+
+```
+```{r}
+ggplot(data = congress) +
+  geom_point(aes(y = Ideology, x = adjGOP, color = GOPwin2010), na.rm = TRUE) +
+  geom_smooth(aes(y = Ideology, x = adjGOP, color = GOPwin2010),
+              method = "lm", se = FALSE, na.rm = TRUE) +
+  geom_vline(aes(xintercept = 0), color = "black", size = 1.25, alpha = 0.33)
+```
+```{r}
+# fitted values
+predfit <- data.frame(GOPwin2010 = as.factor(c(0, 0, 1, 1)), adjGOP = c(-0.5, 0, 0, 0.5))
+predict(congVAR, newdata = predfit)
+
+```
+###(g)
+```{r}
+uncongVAR <- lm(Ideology ~ GOPwin2010 * GOP2party2010, data = congress)
+
+untcongVAR <- tidy(uncongVAR)
+
+untcongVAR
+
+unpredfit <- data.frame(GOPwin2010 = as.factor(c(0, 0, 1, 1)), GOP2party2010 = c(0, 0.5, 0.5, 1))
+predict(uncongVAR, newdata = unpredfit)
+```
+###(h)
+```{r}
+ggplot(data = congress) +
+  geom_histogram(aes(x = adjGOP), bins = 40)
+```
+There does not appear to be clustering in this histogram of the data.
+
+###(i)
+```{r}
+chpov <- lm(ChildPoverty ~ GOPwin2010 + adjGOP, data = congress)
+
+tidy(chpov)
+
+mdinc <- lm(MedianIncome ~ GOPwin2010 + adjGOP, data = congress)
+
+tidy(chpov)
+
+obama <- lm(Obama2008 ~ GOPwin2010 + adjGOP, data = congress)
+
+# There does appear to be a discontinuity here
+tidy(obama)
+
+# A graph of the discontinuity
+ggplot(data = congress) +
+  geom_point(aes(x = adjGOP, y = Obama2008)) +
+  geom_smooth(aes(x = adjGOP, y = Obama2008, color = GOPwin2010), method = "lm")
+
+
+# Removing politicians who ran unopposed we 
+# observe that there is no longer a discontinuity in the data
+ggplot(data = filter(congress, abs(adjGOP) != 0.50)) +
+  geom_point(aes(x = adjGOP, y = Obama2008, color = GOPwin2010)) +
+  geom_smooth(aes(x = adjGOP, y = Obama2008, color = GOPwin2010), method = "lm")
+
+white <- lm(WhitePct ~ GOPwin2010 + adjGOP, data = congress)
+
+# We do see some statistical significance
+tidy(white)
+
+# However removing the outliers removes the discontinuity
+ggplot(data = filter(congress, abs(adjGOP) != 0.50)) +
+  geom_point(aes(x = adjGOP, y = Obama2008, color = GOPwin2010)) +
+  geom_smooth(aes(x = adjGOP, y = Obama2008, color = GOPwin2010), method = "lm")
+
+
+```
+We should be troubled by the discontinuities that appear in Obama share and white percentage, as this suggests that they cannot be used in a discontinuity design.  However, it is important to note that when we remove the uncontested districts, the discontinuity disappears.  This suggests that uncontested districts may introduce some bias into our statistical design.
+
+```{r}
+conVAR <- lm(Ideology ~ GOPwin2010 * adjGOP
+             + ChildPoverty + MedianIncome + Obama2008 + WhitePct, data = congress)
+
+tidy(conVAR)
+```
+###(k)
+```{r}
+conVARquad <- lm(Ideology ~ GOPwin2010 * I(adjGOP ^ 2) + GOPwin2010 * adjGOP + ChildPoverty + MedianIncome + Obama2008 + WhitePct, data = congress)
+
+tidy(conVARquad)
+```
+We find that the results in the quadratic form are significant for the quadratic coefficient on the slope after the discontinuity.  We, however, do not find a significant result for the discontinuity and thus cannot reject the null hypothesis that there is no discontinuity using a quadratic model.
+###(l)
+```{r}
+filtcong <- congress %>%
+  filter(adjGOP > -0.1) %>%
+  filter(adjGOP < 0.1)
+
+filtVAR <- 
+  lm(Ideology ~ GOPwin2010 * adjGOP + ChildPoverty 
+     + MedianIncome + Obama2008 + WhitePct, data = filtcong)
+
+tidy(filtVAR)
+```
+
+We do see a shift from negative to positive on the adjusted GOP coefficient, however, it is still not statistically significant, so we cannot draw any conclusions from the results.  Notably standard errors have also increased, as there is less data to draw from in order to make the regression.
+
+###(m)
+Though it does not show statistically significant results, the final windowed model seems most credible.  Districts will be more similar to one another in the smaller window, and as a result it is closest to the intention of RD designs.  This assumptions of RD design best hold when the movement over the mean is close to random, and a tighter window introduces this randomness.  Those who are not in close races will have different pressures placed on them than those who are, which suggests that there are other variables that would need to be controlled for in order to include them in an RD design.
+
+#Question 11.4
+```{r}
+headstart <- import("data/LudwigMiller_head_start.dta") %>%
+  filter(!is.na(Poverty)) %>%
+  filter(!is.na(Mortality))
+```
+
+###(a)
+$$Mortality = \beta_0 + \beta_1 * HeadStart + \beta_2 * Poverty + \epsilon $$
+
+I expect mortality to increase with poverty, with a discontinuity at the 0 point for the adjusted poverty variable where mortality noticeably decreases from left to right (given that head start is only applied to municipalities with LESS than this poverty rate).
+
+###(b)
+
+RD can estimate a causal effect because there is a clear cutoff for the application of the program, and municipalities are unlikely to be able to manipulate their poverty rate for inclusion into the program and will be randomly distributed around the line.
+
+###(c)
+
+```{r}
+headVAR <- lm(Mortality ~ HeadStart + Poverty, data = headstart)
+
+tidy(headVAR)
+```
+We find that the head start program has a significant effect on mortality rate at the alpha equals 0.05 level and can thus reject the null hypothesis.  
+
+###(d)
+
+```{r}
+headVAR2 <- lm(Mortality ~ HeadStart * Poverty, data = headstart)
+
+tidy(headVAR2)
+
+```
+The head start program no longer has a statistically significant effect on mortality rates, and we cannot reject the null hypothesis.
+
+###(e)
+
+```{r}
+headfilt <- headstart %>%
+  filter(Poverty > -0.8) %>%
+  filter(Poverty < 0.8)
+
+headfiltVAR <- lm(Mortality ~ HeadStart + Poverty, data = headfilt)
+
+tidy(headfiltVAR)
+```
+
+We do not find a statistically significant discontinuity with the adjusted data.
+
+###(f)
+
+```{r}
+headquad <- lm(Mortality ~ HeadStart * Poverty + HeadStart * I(Poverty ^ 2), data = headstart)
+
+tidy(headquad)
+```
+We once again do not find a statistically significant result with the quadratic model for the effect of headstart on mortality.
+
+###(g)
+```{r}
+ggplot(data = headstart) +
+  geom_point(aes(x = Poverty, y = Mortality))
+```
+
+It is very difficult to see any discontinuity in this data as graphed.
+
+###(h)
+```{r}
+  
+ggplot(data = headstart) +
+  geom_point(aes(x = Poverty, y = BinMean, color = as.factor(HeadStart))) +
+  geom_smooth(aes(x = Poverty, y = BinMean, color = as.factor(HeadStart)), method = "lm")
+  
+```
+There now appears to be a significant discontinuity in the data using the binned mean values.
+
+###(i)
+
+```{r}
+headstart$fitted <- headquad$fitted.values
+
+ggplot(data = headstart) +
+  geom_point(aes(x = Poverty, y = BinMean, color = as.factor(HeadStart))) +
+  geom_smooth(aes(x = Poverty, y = BinMean, color = as.factor(HeadStart)), method = "lm") +
+  geom_point(aes(x = Poverty, y = fitted), size = 0.5, alpha = 0.33)
+```
+
+We've now included the fitted values from the quadratic model.  While this model works well for the control group, for the treatment group the association seems more questionable.  The binned means reveal that there is significant variance in the treatment group, which makes it difficult to determine the results of the head start program on mortality.
+
+#Question 13.3
+
+```{r}
+bond <- import("data/BondUpdate.dta")
+
+```
+
+###(a)
+
+```{r}
+bondlm <- lm(GrossRev ~ Rating + Budget, data = bond)
+
+tidy(bondlm)
+```
+
+We find a statistially significant correlation with the rating of the film and the Gross Revenue, a one unit increase in rating is associated on average with a increased gross revenue of 172 million pounds.
+
+```{r}
+bondresid <- resid(bondlm)
+
+plot(bondresid)
+
+lagbond <- c(NA, bondresid[1:(length(bondresid) - 1)])
+
+lagbondOLS <- lm(bondresid ~ lagbond)
+
+summary(lagbondOLS)
+```
+
+We find a significant autocorrelation between the lagged bond gross revenue and the non-lagged term.
+
+###(b)
+
+```{r}
+Rho = summary(lagbondOLS)$coefficients[2]
+
+N = length(bond$GrossRev)
+
+LagRev = c(NA, bond$GrossRev[1:(N - 1)])
+
+LagOrder = c(NA, bond$order[1:(N - 1)])
+
+RevRho <- mean(bond$GrossRev) - Rho * LagRev
+
+OrderRho <- bond$order - Rho * LagOrder
+
+RhoBond <- lm(RevRho ~ OrderRho + Rating + Budget, data = bond)
+
+summary(RhoBond)
+```
+We no longer find a significant relationship between rating and gross revenue.  Instead, we find a significant negative relatinoship between the budget and gross revenue at the alpha equals 0.05 level.  A 1 million dollar increase on budget on average reduces revenue by 1.2 million dollars.
+
+```{r}
+RhoResid <- resid(RhoBond)
+
+plot(RhoResid)
+
+lagrho <- c(NA, RhoResid[1:(length(RhoResid) - 1)])
+
+lagrhoOLS <- lm(RhoResid ~ lagrho)
+
+summary(lagrhoOLS)
+```
+
+We no longer find autocorrelation in the model.
+
+###(c)
+
+```{r}
+laggross<- c(NA, bond$GrossRev[1:(length(bond$GrossRev) - 1)])
+
+dynamicbond <- lm(GrossRev ~ laggross + Rating + Budget, data = bond)
+
+summary(dynamicbond)
+
+LongTermBond <- dynamicbond$coefficients[3] / (1 - dynamicbond$coefficients[2])
+
+LongTermBond
+```
+The short term effect of a one unit increase in rating is an increase of 190 million dollars in gross revenue.  The long term effect of a one unit increase in rating is expressed in the `LongTermBond` statistic, which is equal to 439 million dollars.
+
+###(d)
+```{r}
+DeltaGross <- bond$GrossRev - laggross
+
+LagDeltaGross <- c(NA, DeltaGross[1: (N - 1)])
+
+DickeyGross <- lm(DeltaGross ~ laggross + order + LagDeltaGross, data = bond)
+
+summary(DickeyGross)
+```
+For Gross Revenue, the regression indicates that the data is non-stationary, which means we should move to a differenced model.
+
+```{r}
+lagbudget <- c(NA, bond$Budget[1: (N - 1)])
+
+DeltaBudget <- bond$Budget - lagbudget
+
+LagDeltaBudget <- c(NA, DeltaBudget[1: (N - 1)])
+
+DickeyBudget <- lm(DeltaBudget ~ lagbudget + order + LagDeltaBudget, data = bond)
+
+summary(DickeyBudget)
+
+```
+We do find that there is is a significant correlation in the Dickey-Fuller test.  However, given failures of the other two variables to pass the test, we still should move toward a differenced model.
+
+```{r}
+lagRating <- c(NA, bond$Rating[1: (N - 1)])
+
+DeltaRating <- bond$Rating - lagRating
+
+LagDeltaRating <- c(NA, DeltaRating[1: (N - 1)])
+
+DickeyRating <- lm(DeltaRating ~ lagRating + order + LagDeltaRating, data = bond)
+
+summary(DickeyRating)
+```
+Finally, with rating, we once again find no significance on the Dickey-Fuller test, meaning the data is non-stationary and we should implement a differenced model.
+
+###(e)
+
+```{r}
+DiffModel <- lm(DeltaGross ~ LagDeltaGross + DeltaBudget + DeltaRating)
+
+summary(DiffModel)
+```
+With the differenced model we find that the rating of the film correlates strongly with the revenue.  A one unit increase in the rating of the film increases the revenue by 201 million dollars. 
+
+###(f)
+
+```{r}
+DiffModelActor <- lm(DeltaGross ~ LagDeltaGross + 
+                       DeltaBudget + DeltaRating + Actor, data = bond)
+
+summary(DiffModelActor)
+```
+
+We do not find that a change in actor has a significant effect on the revenue of a Bond film, and thus we cannot reject the null hypothesis that the actor for Bond has no effect on the revenue of the film.
+
+#Question 15.1
+```{r}
+olympic <- import("data/olympics_HW.dta")
+```
+
+###(a)
+```{r}
+onewayolympic <- lm(medals ~ population + GDP + host + temp + elevation + country, data = olympic)
+
+tidy(onewayolympic)
+```
+We estimate that population, GDP, and host country all play a significant positive role in the medal count during the Olympics at the alpha equals 0.05 level.  Temperature and elevation do not play a significant role, and the coefficients imply that they do not have a substantive effect either.
+
+###(b)
+
+```{r}
+olympictwoway <- plm(medals ~ population + GDP + host, 
+                data = olympic, 
+                index = c("country", "year"), 
+                model = "within", 
+                effect = "twoways")
+
+tidy(olympictwoway)
+```
+
+We find that these three variables (population, GDP, and host country) are still significant at the alpha equals 0.05 level.  Population and GDP, however, are somewhat less significant now, and the coefficients show a smaller substantive effect.  Populations and GDPs will grow over time, so we would expect that including time would remove some of the effects of these variables.
+
+###(c)
+
+```{r}
+olympicresid <- resid(olympictwoway)
+
+plot(olympicresid)
+
+lagolympic <- c(NA, olympicresid[1:(length(olympicresid) - 1)])
+
+lagolympicOLS <- lm(olympicresid ~ lagolympic)
+
+summary(lagolympicOLS)
+```
+We find highly significant autocorrelation in the dependent variable.  This implies we should correct for autocorrelation by including Rho variables.
+
+###(d)
+
+```{r}
+Rho = summary(lagolympicOLS)$coefficients[2]
+
+N = length(olympic$medals)
+
+LagMedals = c(NA, olympic$medals[1:(N - 1)])
+
+LagYear = c(NA, olympic$year[1:(N - 1)])
+
+MedalsRho <- mean(olympic$medals) - Rho * LagMedals
+
+YearRho <- olympic$year - Rho * LagYear
+
+olympic$YearRho <- YearRho
+
+RhoOlympic <- plm(MedalsRho ~ population + GDP + host, 
+                data = olympic, 
+                index = c("country", "YearRho"), 
+                model = "within", 
+                effect = "twoways")
+
+summary(RhoOlympic)
+
+```
+
+We now find that both GDP plays a highly significant role in medal count.  However, the role it plays is negative in this model.  For every unit increase in GDP, the country on average receives 0.227 less medals.  The first model is preferable, as this model does not pass face validity, it is highly unlikely that GDP would have such a negative effect on medal count.  This does not mesh well with any theory for medal count, countries with higher GDP can invest much more into athletic infrastructure.
+
+###(e)
+
+```{r}
+LagReg <- plm(medals ~ LagMedals + population + GDP + host, 
+                data = olympic, 
+                index = c("country", "year"), 
+                model = "within", 
+                effect = "twoways")
+
+summary(LagReg)
+```
+
+We find a highly similar result to the two-way fixed effect model in part (b), except now the lagged value for medals also plays a significant role in the result, drawing some small amount of explanatory value from the other three variables.  This means that countries which won medals in the last olympics are likely to win medals in the next.  We might see this as a result of athletes in these countries which participate in multiple olympic games in a row.
+
+###(f)
+
+```{r}
+olympicresid <- resid(LagReg)
+
+plot(olympicresid)
+
+lagolympic <- c(NA, olympicresid[1:(length(olympicresid) - 1)])
+
+lagolympicOLS <- lm(olympicresid ~ lagolympic)
+
+summary(lagolympicOLS)
+```
+We find highly significant autocorrelation in this result, which suggest we may have a biased result.  This implies we should rho-transformed regression to control for autocorrelation.
+
+###(g)
+
+```{r}
+LagRegRho <- plm(MedalsRho ~ LagMedals + population + GDP + host, 
+                data = olympic, 
+                index = c("country", "YearRho"), 
+                model = "within", 
+                effect = "twoways")
+
+summary(LagRegRho)
+
+```
+
+We no longer find statistically significant effects from population, GDP, or host country.  Instead, the only significant coefficient is on `LagMedals`, but it is highly negative.  This would imply that medals previously won have a negative effect on the probability of winning future medals.  This seems highly unlikely and calls the model into question.
+
+###(h)
+
+Bias is not a serious problem when there are 20 or more time periods, as noted in 15.2.  However, in this data set we have data from 1984 to 2014, or 10 periods, which is not enough to reduce this bias.  Thus any results using lagged data are suspect.
+
+###(i)
+
+The fact that athletes compete in multiple olympics and that this suggests that truly skilled athletes would continue winning medals for their countries at a high rate (see Micheal Phelps, Usain Bolt) would imply that this model is somewhat dynamic.  As section 13.4 suggests, if we have good reason to suspect that a dependent variable is dymamic we should include the lagged term.  This may introduce some bias in the case of autocorrelation, however, we know that if we do not include the term we risk omitted variable bias.  As such it is best to use a model as close to the theoretical process as possible, which is the dynamic model.
+
+###(j)
+
+These models are not robust as the explanatory variables are not resistant to change when we move from model to model.  In some models the variables appear significant while in others they do not.  Moreover the substantive effect changes as well from model to model.  We find that sometimes variables appear to have a positive substantive effect, while at other times they have one which is negative.
