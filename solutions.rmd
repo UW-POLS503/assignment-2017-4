@@ -1,0 +1,629 @@
+# Setup
+```{r}
+library("tidyverse")
+library("ggplot2")
+```
+
+# Problem 8.2
+```{r}
+data <- read.csv("Ch08.Ex2.PeaceCorpsData/PeaceCorpsHW.csv")
+```
+
+## Problem A
+Intuitively, it makes sense that people would be more likely to apply to the peace corps when the economy is doing poorly. When the economy is booming, it is easier for young people to get jobs in the private sector; young people will have more options for higher paying jobs. When there are fewer job options, more young people may be swayed to apply to the Peace Corps.
+
+## Problem B
+```{r}
+TwoB <- lm(appspc ~ unemployrate + yr1 + yr2 + yr3 + yr4 + yr5 + yr6, data=data)
+summary(TwoB)
+```
+For each one unit increase in the unemployment rate, there is a corresponding 1.107 increase in the conditional mean of peace corps applications. The coefficient is not statistically significant. It seems plausible that the relationship between applications and unemployment is different between states due to factors that do not change over time (e.g. people in Mississippi may be more inclined to apply to the peace corps than people in Alabama for some reason), so a better model may include fixed effects on state.
+
+
+## Problem C
+```{r}
+ggplot(data, aes(x=unemployrate, y=appspc)) + geom_text(aes(label=stateshort))
+# Referenced an online ggplot tutorial to create the plot
+# Citation
+# "Introduction to R Graphics with Ggplot2." Harvad.edu. Harvard University, n.d. Web. 3 June 2017. <http://tutorials.iq.harvard.edu/R/Rgraphics/Rgraphics.html>.
+# Also referenced a Stack Overflow Post in creating this plot
+# Reference
+# "Label Points in Geom_point." Stack Overflow. Stack Exchange Inc., n.d. Web. 3 June 2017. <https://stackoverflow.com/questions/15624656/label-points-in-geom-point>. Referenced the answer by username "agstudy" on (answer was edited by username "micstr" on July 31, 2016)
+```
+The graph makes the points from the District of Columbia really stick out. We can also run the model with fixed effects on state to see how the coefficinet on DC is different from the coefficients on other states.
+
+```{r}
+TwoC <- lm(appspc ~ unemployrate + factor(state) + yr1 + yr2 + yr3 + yr4 + yr5 + yr6, data=data)
+summary(TwoC)
+```
+The coefficient on the District of Columbia is quite a bit higher (almost three times higher than the next highest state coefficient). The high coefficient on District of Columbia means that the mean value of appspc is quite a bit higher in the District of Columbia than in the other states. How might this affect the pooled regression? My guess is that the coefficient on umemployrate will be much higher in the pooled regression with DC included than without DC included, because the Y-values for the DC points are much higher than the Y-values for the other states' points. As the output below shows, the unemployrate coefficient is far lower in the pooled regression without DC (-1.964) than with DC (1.107).
+
+```{r}
+no_DC <- subset(data, state != "DISTRICT OF COLUMBIA")
+# referenced documentation on subset -- http://www.statmethods.net/management/subset.html -- to write the code to subset DC
+# Citation: "Subsetting Data." Quick - R. Robert I. Kabacoff, Ph.D., n.d. Web. 3 June 2017. <http://www.statmethods.net/management/subset.html>.
+
+
+check_no_DC <- lm(appspc ~ unemployrate + yr1 + yr2 + yr3 + yr4 + yr5 + yr6, data=no_DC)
+summary(check_no_DC)
+```
+
+We can also look at the scatterplot with and without DC. The scatter looks dramatically different without DC than it did with DC. The slight positive slope (in the model with DC) of the regression line is now a slight negative slope (in the model without DC).
+```{r}
+ggplot(no_DC, aes(x=unemployrate, y=appspc)) + geom_text(aes(label=stateshort))
+# Referenced an online ggplot tutorial to create the plot
+# Citation
+# "Introduction to R Graphics with Ggplot2." Harvad.edu. Harvard University, n.d. Web. 3 June 2017. <http://tutorials.iq.harvard.edu/R/Rgraphics/Rgraphics.html>.
+# Also referenced a Stack Overflow Post in creating this plot
+# Reference
+# "Label Points in Geom_point." Stack Overflow. Stack Exchange Inc., n.d. Web. 3 June 2017. <https://stackoverflow.com/questions/15624656/label-points-in-geom-point>. Referenced the answer by username "agstudy" on (answer was edited by username "micstr" on July 31, 2016)
+```
+
+## Problem D
+```{r}
+no_DC_pooled <- lm(appspc ~ unemployrate + yr1 + yr2 + yr3 + yr4 + yr5 + yr6, data=no_DC)
+summary(no_DC_pooled)
+```
+As shown in Part C, the coefficient on unemployrate went from beign positive to negative. For each one unit increase in the unemployment rate without DC's data points, there is a 1.964 unit decrease in in appspc. The coefficient is statistically significant at the alpha = .15 level.
+
+## Problem E
+The results change significantly. The coefficient in the pooled regression is -1.964, versus 0.8125 in the fixed effects model. The fixed effects model is preferable in my opinion. Controlling for fixed effects controls for variables that do not change over time that could confound the relationship between unemployment rate and applications (e.g. perhaps people in DC are more likely to apply to the Peace Corps than people in Alabama for whatever reason). In addition, the fixed effect on year controls for time period effects (i.e. effects that change the number of applications in a year across all states).
+```{r}
+# referenced code from Bailey's Chapter 8 computing corner
+no_DC_fixed <- lm(appspc ~ unemployrate + factor(state) + factor(year), data=no_DC)
+summary(no_DC_fixed)
+```
+
+## Problem F
+```{r}
+# I referenced from Bailey's chapter 8 computing corner to run this code
+library(plm)
+summary(plm(appspc ~ unemployrate, data=no_DC, index=c("state", "year"), model="within", effect="twoways"))
+```
+The coefficient and standard error for unemployrate are the same using the de-meaned approach or the LSDV approach.
+
+
+# Problem 8.5
+```{r}
+school_data <- read.csv("Ch08.Ex5.TexasSchoolBoardsData/TexasSchoolBoard.csv")
+```
+
+## Problem A
+```{r}
+FiveA <- lm(LnAvgSalary ~ OnCycle, data=school_data)
+summary(FiveA)
+```
+OnCycle is a dichotomous variable that can take values 0 or 1. The coefficient on OnCycle denotes the change in the conditional mean of logged, average teacher salaries when the election takes place on a full cycle. Since LnAvgSalary is the logged average salary, we know that a one unit increase in OnCycle causes a 3.06% decrease in average teacher salary in all districts. There could be bias in our estimates if there are omitted variables (e.g. period effects that cause the average logged, average teacher salary to differ between years). 
+
+If districts in which the teacher unions are more powerful are more able to get off cycle elections, then there could be some bias caused by reverse causality. I would assume that the power of teacher unions is correlated with salary. If that is the case, then the power of unions is a confounder, since it is correlated with both OnCycle and LnAvgSalary.
+
+## Problem B
+```{r}
+# Referenced Bailey's "Computing Corner" for Chapter 8 to write this code
+FiveB <- lm(LnAvgSalary ~ CycleSwitch + AfterSwitch + AfterCycleSwitch, data=school_data)
+summary(FiveB)
+```
+The coefficients tell us several things. The coefficient on CycleSwitch tells us the difference in the intercepts between the districts that switched and did not switch. That is, among districts that switched, the conditional mean of LnAvgSalary before 2007 is .024 lower than among districts that did not switch. The coefficient on AfterSwtich provides the difference in the conditional mean of Y after 2007 versus before 2007. The interaction term provides the difference in difference. In the post-2007 time period, the change in average teacher salary among districts that switched to OnCycle elections was .86% lower than the change in districts that did not switch.
+
+The effect of moving to on-cycle elections on salary appears to be negative. That is, on-cycle elections made teacher salaries increase by a smaller amount than they otherwise would have if the districts that switched had not switched. Among districts that switched, the average teacher salary likely increased after the switch (though we can't say for sure since the confidence intervals overlap). The teacher salaries did not increase by as much as the increase among districts that did not switch.
+
+
+## Problem C
+```{r}
+# Referenced Bailey's "Computing Corner" for Chapter 8 to write this code
+FiveC <- lm(LnAvgSalary ~ OnCycle + factor(DistNumber), data=school_data)
+summary(FiveC)
+```
+
+The results show that the conditional mean of LnAvgSalary is .08% higher among districts that are on cycle versus off cycle. The coefficient is not statistically significant. Since time fixed effects are not included, period effects (e.g. an effect that would cause a change in teacher salaries in all of the districts) are not controlled for.
+
+## Problem D
+```{r}
+# Referenced Bailey's "Computing Corner" for Chapter 8 to write this code
+FiveD <- lm(LnAvgSalary ~ OnCycle + factor(DistNumber) + factor(Year), data=school_data)
+summary(FiveD)
+```
+The conditional mean of LnAvgSalary is .85% lower among districts that are OnCycle versus districts that are off cycle. The coefficient is statistically significant.
+
+### Problem Di
+Since district fixed effects are included, any characteristics that are specific to districts that do not change over time will be controlled for. So, preexisting characteristics that do not change between 2003 and 2009 will be controlled for. 
+
+### Problem Dii
+Period effects that affect all districts are controlled for by including Year fixed effects.
+
+## Problem E
+No. We would certainly still be able to compare the conditional mean of LnAvgSalary among districts that are on or off cycle. However, that comparison would not be particularly useful, unless we included some omitted variables (e.g. power of teacher unions). The useful part of using the diff in diff or two-way fixed effects approach is that we are able to see how salaries changed in districts that did not switch versus districts that did switch. We can then use the comparison to determine the effect of holding elections on cycle. The comparison is useful as long as we are comfortable assuming that the change in teacher salaries among districts that did switch would have mirrored the change among districts that did not switch had the districts that switched not switched. 
+
+
+# Problem 11.3
+```{r}
+congress_data <- read.csv("Ch11.Ex3.CongressionalElectionsData/CongressRD.csv")
+```
+
+## Problem A
+As mentioned in the equation, politicians may try to appeal to median voters, as opposed to strictly adhering to their party's views on all issues. In addition, there are some other omitted variables that could change a politician's ideology regardless of party (e.g. a Republican that loves the outdoors may be more likely to support environmental regulations than other republicans, so love of the outdoors could be an omitted variable).
+
+## Problem B
+RD models can fight endogeneity because they do not require that politicial party not be correlated with the error term. The inclusion of an assignment variable on the right hand side of the equation eliminates any potential correlation between the error terms and political party.
+
+## Problem C
+```{r}
+ggplot(congress_data, aes(x=GOP2party2010, y=Ideology)) + geom_point()
+# Referenced an online ggplot tutorial to create the plot
+# Citation
+# "Introduction to R Graphics with Ggplot2." Harvad.edu. Harvard University, n.d. Web. 3 June 2017. <http://tutorials.iq.harvard.edu/R/Rgraphics/Rgraphics.html>.
+# Also referenced a Stack Overflow Post in creating this plot
+# Reference
+# "Label Points in Geom_point." Stack Overflow. Stack Exchange Inc., n.d. Web. 3 June 2017. <https://stackoverflow.com/questions/15624656/label-points-in-geom-point>. Referenced the answer by username "agstudy" on (answer was edited by username "micstr" on July 31, 2016)
+```
+There is a sharp discontinuity where GOP2party2010 is equal to .5. More specifically, in districts where more than 50% of the votes went to the Republican candidate, political ideology tended to have a much higher score. Slopes on both sides of the discontinuity seem to positive. I think that the RD will show that ideology scores tend to be closer to 0 in districts where GOP2party2010 is close to .5 and further from 0 where the margin of victory was larger.
+
+## Problem D
+The assignment variable is GOP2party2010. The treatment variable is a Republican win, where the treatment is 1 if the assignment variable is greater than or equal to .5 and 0 otherwise.
+
+The most basic RD model would entail keeping the slopes of the regression lines the same across the discontinuity. The following formula would describe such a relationship:
+
+$$
+\text{Ideology} = \beta_0 + \beta_{1}\text{GOPwin2010}_i + \beta_{2}\text{GOP2party2010}_i + \epsilon_i
+$$
+Beta-knot is the intercept for the first line; that is where the non-treatment group regression line crosses the y-axis. Beta1 is the difference between the intercept of the non-treatment group regression line and the treatment group regression line. Beta2 is the slope paratmeter for each line.
+
+## Problem E
+```{r}
+simple_rd <- lm(Ideology ~ GOPwin2010 + GOP2party2010, data=congress_data)
+summary(simple_rd)
+# Citation: Bailey's Chapter 8 Computing Corner
+```
+The intercept coefficient states that the non-treatment group (where GOPwin2010=0) regression line crosses the y-axis at -.48. The treatment group (where GOPwin2010=1) regression line crosses the y-axis at .52 (1-.48). The conditional mean Ideology score is 1 higher in districts in which a republican narrowly won versus a district where a republican narrowly lost, indicating an effect of 1 due to being republican. The coeffecient on GOP2party2010 states that the slope of each line is .23; for each one unit increase in GOP2party2010, there is a corresponding .23 increase in the conditional mean ideology score.
+
+
+## Problem F
+The equation is now:
+$$
+\text{Ideology} = \beta_0 + \beta_{1}\text{GOPwin2010}_i + \beta_{2}\text{(GOP2party2010}_i - .5) + \beta_3\text{(GOP2party2010}_i - .5)\text{GOPwin2010}_i +  \epsilon_i
+$$
+```{r}
+congress_data$assignment_var <- congress_data$GOP2party2010 -.5
+diff_slopes <- lm(Ideology ~ GOPwin2010 + assignment_var + assignment_var*GOPwin2010, data=congress_data)
+summary(diff_slopes)
+```
+The beta-knot and GOPWin2010 coefficients are pretty similar. The coefficient on assignment_var is more than twice as high. The coefficient on assignment_var now encapsulates the slope of the non-treated group regression line. The slope is much higher in the non-treated group than in the treated group, hence the change in this variable. The coefficient on the interaction term is negative, which shows that the slope is .49 lower in the treated group.
+
+```{r}
+# nulls deleted
+congress_data <- na.omit(congress_data)
+congress_data$fitted <- predict(diff_slopes)
+ggplot(congress_data, aes(x=assignment_var, y=Ideology)) + geom_point() + geom_line(aes(y=fitted))
+# Referenced an online ggplot tutorial to create the plot and use the predict function
+# Citation
+# "Introduction to R Graphics with Ggplot2." Harvad.edu. Harvard University, n.d. Web. 3 June 2017. <http://tutorials.iq.harvard.edu/R/Rgraphics/Rgraphics.html>.
+# Also referenced R documentation while figuring out how to work with the predict function
+# Citation
+# "Predict Method for Linear Model Fits." R Documentation. N.p., n.d. Web. 4 June 2017. <https://stat.ethz.ch/R-manual/R-devel/library/stats/html/predict.lm.html>. [Package stats version 3.4.0 Index]
+```
+
+### Democrat with GOP2party2010 = 0
+The fitted value for a democrat with GOP2party2010=0 is -.58.
+
+```{r}
+ -0.31327 - (.5 * 0.52861)
+# [1] -0.577575
+```
+
+### Democrat with GOP2party2010=.5
+The value is given by our regression. It is the coefficient on beta-knot, approximately -0.31.
+
+### Republican with GOP2party2010=.5
+The value is also given by our regression. It is the coefficient on beta-knot + the coefficient on GOPwin2010, approximately .67. 
+```{r}
+-0.31327 + 0.98157
+# [1] 0.6683
+```
+
+### Republican with GOPparty2010=1
+We can calculate the value similarly to how we calculated the fitted ideology score for a democrat where GOP2party2010=0. The ideology score for a republican where GOP2party2010=1 is about .69.
+```{r}
+0.6683 + (.5 * (0.52861 - 0.48933))
+# [1] 0.68794
+```
+
+## Problem G
+The equation is now:
+$$
+\text{Ideology} = \beta_0 + \beta_{1}\text{GOPwin2010}_i + \beta_{2}\text{(GOP2party2010}_i) + \beta_3\text{(GOP2party2010}_i)\text{GOPwin2010}_i +  \epsilon_i
+$$
+```{r}
+diff_slopes2 <- lm(Ideology ~ GOPwin2010 + GOP2party2010 + GOP2party2010*GOPwin2010, data=congress_data)
+summary(diff_slopes2)
+```
+Both of the slope coefficients remain unchanged, as is to be expected. Both of the intercept coefficients are higher, which makes sense because each data point in our assignment variable is .5 higher in this model compared to the previous model.
+
+```{r}
+# nulls deleted
+congress_data <- na.omit(congress_data)
+congress_data$fitted <- predict(diff_slopes2)
+ggplot(congress_data, aes(x=GOP2party2010, y=Ideology)) + geom_point() + geom_line(aes(y=fitted))
+# Referenced an online ggplot tutorial to create the plot and use the predict function
+# Citation
+# "Introduction to R Graphics with Ggplot2." Harvad.edu. Harvard University, n.d. Web. 3 June 2017. <http://tutorials.iq.harvard.edu/R/Rgraphics/Rgraphics.html>.
+# Also referenced R documentation while figuring out how to work with the predict function
+# Citation
+# "Predict Method for Linear Model Fits." R Documentation. N.p., n.d. Web. 4 June 2017. <https://stat.ethz.ch/R-manual/R-devel/library/stats/html/predict.lm.html>. [Package stats version 3.4.0 Index]
+```
+
+### Democrat with GOP2party2010 = 0
+The value is given by our regression. The fitted value for a democrat with GOP2party2010=0 is -0.57758.
+
+### Democrat with GOP2party2010=.5
+The value is given by our regression. It is the coefficient on beta-knot, approximately -.31.
+```{r}
+-0.57758 + (.5 * 0.52861)
+# [1] -0.313275
+```
+### Republican with GOP2party2010=.5
+The value is also given by our regression. It is the coefficient on beta-knot + the coefficient on GOPwin2010, approximately .67. 
+```{r}
+-0.57758 + 1.2262 + .5* (0.52861 - 0.48933)
+# [1] 0.66826
+```
+
+### Republican with GOPparty2010=1
+We can calculate the value similarly to how we calculated the fitted ideology score for a democrat where GOP2party2010=0. The ideology score for a republican where GOP2party2010=1 is about .69.
+```{r}
+0.64862 + (1 * (0.52861 - 0.48933))
+# [1] 0.6879
+```
+
+The coefficients are basically just shifted because our graph is no longer centered around the y-intercept. So the fitted values are the same, but the intercept coefficients are different since the regression lines now cross the intercept at different points.
+
+## Problem H
+Bailey discusses a potential test to determine if clustering is present. Bailey suggests creating a histogram, which is a useful, easy check to see if clustering exists. Plotting a histogram does not seem to identify an obvious clustering.
+```{r}
+ggplot(congress_data, aes(x=assignment_var)) + geom_histogram()
+# Referenced an online ggplot tutorial to create the histogram
+# Citation
+# "Introduction to R Graphics with Ggplot2." Harvad.edu. Harvard University, n.d. Web. 3 June 2017. <http://tutorials.iq.harvard.edu/R/Rgraphics/Rgraphics.html>.
+```
+
+## Problem I
+Bailey  recommends determining if the treatment causes a discontinuity in other variables, with the argument being that if that is the case, then the treatment is not the only thing affected by the treatment. If other variables are affected by the treatment, then RD may not be an appropriate method for analyzing the question of interest. 
+
+### Child Poverty
+```{r}
+check1 <- lm(ChildPoverty ~ GOPwin2010 + GOP2party2010 + GOP2party2010*GOPwin2010, data=congress_data)
+summary(check1)
+```
+
+### Median Income
+```{r}
+check2 <- lm(MedianIncome ~ GOPwin2010 + GOP2party2010 + GOP2party2010*GOPwin2010, data=congress_data)
+summary(check2)
+```
+
+### Obama2008
+```{r}
+check3 <- lm(Obama2008 ~ GOPwin2010 + GOP2party2010 + GOP2party2010*GOPwin2010, data=congress_data)
+summary(check3)
+```
+
+### WhitePct
+```{r}
+check4 <- lm(WhitePct~ GOPwin2010 + GOP2party2010 + GOP2party2010*GOPwin2010, data=congress_data)
+summary(check4)
+```
+
+Since the coefficient on GOPwin2010 is significant in each regression, there is a significant discontinuity where GOP2party2010=.5 in each regression. That means that the treatment is correlated with the treatment. Therefore, ChildPoverty, MedianIncome, Obama2008, and WhitePct should all be included as variables on the right hand side of the equation, since we want Ideology to be the only variable that is affected by the treatment.
+
+## Probm J
+```{r}
+diff_slopes3 <- lm(Ideology ~ GOPwin2010 + GOP2party2010 + GOP2party2010*GOPwin2010 + ChildPoverty + MedianIncome + Obama2008 + WhitePct, data=congress_data)
+summary(diff_slopes3)
+```
+The coefficient on GOPwin2010 is about 1.05, meaning that the mean Ideology is about 1.05 higher at GOP2party2010=.5 for Republicans than Democrats. Including the new variables on the right hand side equation means that any changes in ChildPoverty, MedianIncome, Obama2008, and WhitePct resulting from the treatment are controlled for.
+
+## Problem K
+```{r}
+congress_data$squared_int <- (congress_data$GOP2party2010*congress_data$GOPwin2010) ^2
+quad <- lm(Ideology ~ GOPwin2010 + GOP2party2010 + GOP2party2010 + GOP2party2010*GOPwin2010 + squared_int + ChildPoverty + MedianIncome + Obama2008 + WhitePct, data=congress_data)
+# Citation: Bailey's Chapter 7 Computing Corner. Referenced the Chapter 7 computing corner to figure out how to make a quadratic term
+summary(quad)
+```
+The coefficient on GOPwin2010 is lower than it was in part J (.7 versus 1.05). The fitted values, especially as we move further away from GOP2party2010=.5, will be quite different. The beta-knot value is also different, as is to be expected by changing the slope of the non-treated regression line.
+
+## Problem L
+```{r}
+window <- subset(congress_data, GOP2party2010 > .4)
+window <- subset(window, GOP2party2010 < .6)
+# referenced documentation on subset -- http://www.and statmethods.net/management/subset.html -- to write the code to subset congress_data
+# Citation: "Subsetting Data." Quick - R. Robert I. Kabacoff, Ph.D., n.d. Web. 3 June 2017. <http://www.statmethods.net/management/subset.html>.
+
+window_model <- lm(Ideology ~ GOPwin2010 + GOP2party2010 + GOP2party2010*GOPwin2010  + ChildPoverty + MedianIncome + Obama2008 + WhitePct, data=window)
+summary(window_model)
+```
+The coefficient on GOP2party2010 is slightly higher than the model from part j (1.201 vs 1.051). The difference in slopes in the treated and non-treated groups is slightly lower ( -.6745 vs -.1771).
+
+## Problem M
+The model in part l is the most credible. There are a good number of data points in the narrow window and all it includes several control variables that should be controlled for. The data does not seem to need a quadratic fit, especially in such a narrow window.
+
+
+# Problem 11.4
+```{r}
+headstart <- read.csv("Ch11.Ex4.HeadStartNationalData/LudwigMiller_head_start.csv")
+```
+
+## Problem A
+The equation is:
+$$
+\text{Mortality} = \beta_0 + \beta_{1}\text{Headsart}_i + \beta_{2}\text{Poverty}_i + \epsilon_i
+$$
+As opoposed to drawing, I will explain what I think the graph will look like. I would assume that counties where the poverty level is slightly below 59.2% would have slightly lower mortality rates than areas where the poverty level is slightly above 59.2%. I would expect that the slope will be negative to the left and right of the cutoff.To the left and right of the cutoff, I would expect for the line to be non-linear, since there are diminishing marginal returns to health as wealth increases significantly (e.g. people that make 100,000 dollars per year are not likely to be significantly less healthy than people that make 150,000 dollars per year, whereas I would expect that someone who makes 50,000 dollars per year is significantly healthier than someone who makes 0 dollars per year).
+
+## Problem B
+Regression discontinuity can help explain causation since including the assignment variable on the right side of the equation can ensure that the coefficient on the treatment variables is exogenous.
+
+## Problem C
+```{r}
+FourC <- lm(Mortality ~ HeadStart + Poverty, data=headstart)
+summary(FourC)
+```
+The coefficient on HeadStart indicates that the mean mortality rate is .9131 lower at the discontinuity for the treated group, indicating that HeadStart may have some beneficial impact on mortality.
+
+## Probem D
+```{r}
+FourD <- lm(Mortality ~ HeadStart + Poverty + HeadStart*Poverty, data=headstart)
+summary(FourD)
+```
+The coefficient on the interaction term indicates that the slope on the regression line in the treated group is .18 higher than the slope of the regression line in the non-treated group. The coefficient on HeadStart is similar in the simple and varying slopes models (-1.02678 and -0.91310, respectively).
+
+## Problem E
+```{r}
+headstart_window <- subset(headstart, Poverty > -.8)
+headstart_window <- subset(headstart_window, Poverty < .8)
+# referenced documentation on subset -- http://www.and statmethods.net/management/subset.html -- to write the code to subset congress_data
+# Citation: "Subsetting Data." Quick - R. Robert I. Kabacoff, Ph.D., n.d. Web. 3 June 2017. <http://www.statmethods.net/management/subset.html>.
+FourE <- lm(Mortality ~ HeadStart + Poverty, data=headstart_window)
+summary(FourE)
+```
+The smaller model using the smaller window seems to indicate an even larger benefit conferred (a -2.1035 reduction in mortality at the cut point).
+
+## Problem F
+```{r}
+quad <- lm(Mortality ~ HeadStart + Poverty + HeadStart*Poverty + I((HeadStart*Poverty)^2), data=headstart)
+# Citation: Bailey's Chapter 7 Computing Corner. Referenced the Chapter 7 computing corner to figure out how to make a quadratic term
+summary(quad)
+```
+The coefficient on headstart is slightly higher in the quadratic model (-1.63245) than in the smaller window model (-2.1035).
+
+## Problem G
+```{r}
+ggplot(headstart, aes(x=Poverty, y=Mortality)) + geom_point()
+# Referenced an online ggplot tutorial to create the plot
+# Citation
+# "Introduction to R Graphics with Ggplot2." Harvad.edu. Harvard University, n.d. Web. 3 June 2017. <http://tutorials.iq.harvard.edu/R/Rgraphics/Rgraphics.html>.
+# Also referenced a Stack Overflow Post in creating this plot
+# Reference
+# "Label Points in Geom_point." Stack Overflow. Stack Exchange Inc., n.d. Web. 3 June 2017. <https://stackoverflow.com/questions/15624656/label-points-in-geom-point>. Referenced the answer by username "agstudy" on (answer was edited by username "micstr" on July 31, 2016)
+```
+```{r}
+ggplot(headstart_window, aes(x=Poverty, y=Mortality)) + geom_point()
+# Referenced an online ggplot tutorial to create the plot
+# Citation
+# "Introduction to R Graphics with Ggplot2." Harvad.edu. Harvard University, n.d. Web. 3 June 2017. <http://tutorials.iq.harvard.edu/R/Rgraphics/Rgraphics.html>.
+# Also referenced a Stack Overflow Post in creating this plot
+# Reference
+# "Label Points in Geom_point." Stack Overflow. Stack Exchange Inc., n.d. Web. 3 June 2017. <https://stackoverflow.com/questions/15624656/label-points-in-geom-point>. Referenced the answer by username "agstudy" on (answer was edited by username "micstr" on July 31, 2016)
+```
+I do not see a discernible discontinuity when I look at the full dataset or at the smaller window (where we only look at points where poverty is greater than -.8 or less than .8).
+
+## Problem H
+```{r}
+ggplot(headstart_window, aes(x=Bin, y=BinMean)) + geom_point()
+# Referenced an online ggplot tutorial to create the plot
+# Citation
+# "Introduction to R Graphics with Ggplot2." Harvad.edu. Harvard University, n.d. Web. 3 June 2017. <http://tutorials.iq.harvard.edu/R/Rgraphics/Rgraphics.html>.
+# Also referenced a Stack Overflow Post in creating this plot
+# Reference
+# "Label Points in Geom_point." Stack Overflow. Stack Exchange Inc., n.d. Web. 3 June 2017. <https://stackoverflow.com/questions/15624656/label-points-in-geom-point>. Referenced the answer by username "agstudy" on (answer was edited by username "micstr" on July 31, 2016)
+```
+Binning is often useful to idenfy a discontinuity. I think our bins might be too large in this case, but they seem to show the opposite of what I would have expected; the graph shows that the mortality rate is higher just to the left of the discontinuity compared to just the right of the discontinuity. (I used the Bin and BinMean columns that were included in the dataset).
+
+## Problem I
+```{r}
+ggplot(headstart_window, aes(x=Bin, y=BinMean)) + geom_point() + geom_smooth(aes(y=FittedQuadratic))
+# Referenced an online ggplot tutorial to create the plot and use the predict function
+# Citation
+# "Introduction to R Graphics with Ggplot2." Harvad.edu. Harvard University, n.d. Web. 3 June 2017. <http://tutorials.iq.harvard.edu/R/Rgraphics/Rgraphics.html>.
+# Also referenced R documentation while figuring out how to work with the predict function
+# Citation
+# "Predict Method for Linear Model Fits." R Documentation. N.p., n.d. Web. 4 June 2017. <https://stat.ethz.ch/R-manual/R-devel/library/stats/html/predict.lm.html>. [Package stats version 3.4.0 Index]
+```
+I used the FittedQuadratic values that were already included in the dataset. The curve seems to show that mortality is lowest where bin=.25 and highest around bin=-.3 and bin=.8. I'm honestly not sure what to make of these results, since they seem to indicate that the poorest neighborhoods have a lower mortality than the least poor neighborhoods. My guess is that that there is an underlying data issue (e.g. small sample size).
+
+# Problem 13.3
+```{r}
+bond_data <- read.csv("Ch13.Ex3.JamesBondMoviesData/BondUpdate.csv")
+```
+
+## Problem A
+```{r}
+ThreeA <- lm(GrossRev~ Rating + Budget, data=bond_data)
+summary(ThreeA)
+```
+
+
+```{r}
+# referenced code from Bailey's Chapter 13 computing corner
+Errors <- resid(ThreeA)
+LagErrors<- c(NA, Errors[1:(length(Errors)-1)])
+AuxReg <- lm(Errors ~ LagErrors)
+summary(AuxReg)
+```
+Since the coefficient on LagErrors is statistically significant, we can say that there is autocorrelation in our errors.
+
+## Problem B
+```{r}
+# referenced code from Bailey's Chapter 13 computing corner
+Rho_hat <- summary(AuxReg)$coefficients[2]
+bond_data$LagGrossRev <- c(NA, bond_data$GrossRev[1:nrow(bond_data) -1])
+bond_data$LagRating <- c(NA, bond_data$Rating[1:nrow(bond_data) -1])
+bond_data$LagBudget <- c(NA, bond_data$Budget[1:nrow(bond_data) -1])
+
+bond_data$RhoGrossRev <- bond_data$GrossRev - Rho_hat*bond_data$LagGrossRev
+bond_data$RhoRating <- bond_data$Rating - Rho_hat*bond_data$LagRating
+bond_data$RhoBudget <- bond_data$Budget - Rho_hat*bond_data$LagBudget
+
+summary(lm(RhoGrossRev ~ RhoRating + RhoBudget, data=bond_data))
+```
+The coefficients on Rating and Budget are a bit higher than the corresponding coefficient in the first regression. Bailey notes that it is ok that the coefficient in the rho transformed model is different than the coefficient in the original OLS (both are still not subject to bias in OLS because they are both estimates of the true beta). The standard error on the Budget coefficient is larger in the part b regression than in the part a regression which is to be expected in the autocorrelation corrected model vs the non-corrected model. I would not have expected the Rating standard error to be smaller, but it is. The error term is no longer autocorrelated (the autocorrelation did go away).
+
+## Problem C
+```{r}
+# referenced code from Bailey's Chapter 13 computing corner
+ThreeC <- lm(GrossRev ~ lag(GrossRev) + Rating + Budget, data=bond_data)
+summary(ThreeC)
+```
+In the short term, a one unit increase in rating will increase GrossRev by 190.75. In the long run, a one unit increase in Rating will lead to a 439.219 unit increase in Gross Rev (calculation below).
+
+```{r}
+190.7528/(1- 0.5657)
+# [1] 439.219
+```
+
+## Problem D
+```{r}
+bond_data$ChangeRev <- bond_data$GrossRev - bond_data$LagGrossRev
+summary(lm(ChangeRev ~ lag(GrossRev) + Rating + Budget + lag(ChangeRev), data=bond_data))
+```
+Using the significance values from p. 473 of Bailey, GrossRev, Rating, and budget are all subject to nonstationarity.
+
+## Problem E
+```{r}
+# differenced
+summary(lm(I(GrossRev - lag(GrossRev)) ~ I(lag(GrossRev)-(lag(lag(GrossRev)))) + I(Rating - lag(Rating)) + I(Budget - lag(Budget)), data=bond_data))
+```
+The model now uses differenced independent and dependent variables, so we have one fewer data points with which to work with. For each one unit increase in first difference of Rating, there is a 201.13 unit increase in the first difference of GrossRev.
+
+## Problem F
+```{r}
+summary(lm(GrossRev ~ Rating + Budget + Actor, data=bond_data))
+```
+Including actor in the regression indicates that Sean Connery has the largest effect on revenue.
+
+# Problem 15.1
+```{r}
+olympicsdata <- read.csv("Ch15.Ex1&Ex2.OlympicsData/olympics_HW.csv")
+```
+
+## Problem A
+```{r}
+OneA <- lm(medals ~ population + GDP + host + temp + elevation + factor(country), data=olympicsdata)
+summary(OneA)
+```
+For each one unit increase in temp, there is a corresponding -.00003 decrease in the conditional mean of medals. For each one unit increase in elevation, there is a corresponding .0001 increase in the conditional mean of medals. Neither coefficient is significant. Including a fixed effect on country allows for country-specific variables that do not change over time to be controlled for.
+
+## Problem B
+```{r}
+# referenced code from Bailey's chapter 8 compute corner
+OneB <- lm(medals ~ population + GDP + host + factor(year) + factor(country), data=olympicsdata)
+# ^Bailey recommends using the plm command, but this yields the same results
+summary(OneB)
+```
+The coefficients on temp and elevation both flipped, but are still quite small and neither is statistically significant in either regression. Including fixed effects on year now controls for period effects that affect the number of medals in a given time period.
+
+## Problem C
+```{r}
+# using data from Bailey's chapter 15 computing corner
+olympicsdata$residuals <- rep(NA, nrow(olympicsdata))
+olympicsdata$residuals[as.numeric(names(OneB$residuals))] = OneB$residuals
+olympicsdata$LagID <- c(NA, olympicsdata$ID[1:nrow(olympicsdata)-1])
+olympicsdata$LagResiduals <- c(NA, olympicsdata$residuals[1:nrow(olympicsdata)-1])
+olympicsdata$LagResiduals[olympicsdata$LagID != olympicsdata$ID] = NA
+RhoHat<-lm(residuals~LagResiduals, data=olympicsdata)
+summary(RhoHat)
+```
+The coefficient on LagResiduals is highly statistically significant, so there does appear to be autocorrelation. Autocorrelation will not bias our coefficients but does mean that we are underestimating our standard errors.
+
+## Prolem D
+```{r}
+# referenced code from Bailey's Chapter 15 computing corner
+# create lag variables
+olympicsdata$LagMedals <- c(NA, olympicsdata$medals[1:nrow(olympicsdata)-1])
+olympicsdata$LagPopulation <- c(NA, olympicsdata$population[1:nrow(olympicsdata)-1])
+olympicsdata$LagGDP <- c(NA, olympicsdata$GDP[1:nrow(olympicsdata)-1])
+olympicsdata$LagHost <- c(NA, olympicsdata$host[1:nrow(olympicsdata)-1])
+
+# I couldn't get Bailey's code to work properly, but I think my code below sill gets the right answer (it just drops data where LagID and ID are not equal)
+# create rho transformed variables
+# olympicsdata$medals_rho <- rep(NA, length(olympicsdata$medals))
+#olympicsdata$population_rho <- rep(NA, nrow(olympicsdata))
+# olympicsdata$gdp_rho <- rep(NA, nrow(olympicsdata))
+# olympicsdata$host_rho <- rep(NA, nrow(olympicsdata))
+
+# fill rho
+medals_rho <- (olympicsdata$medals[olympicsdata$LagID==olympicsdata$ID] - RhoHat$coefficients[2]*olympicsdata$LagMedals[olympicsdata$LagID==olympicsdata$ID])
+population_rho <- (olympicsdata$population[olympicsdata$LagID==olympicsdata$ID] - RhoHat$coefficients[2]*olympicsdata$LagPopulation[olympicsdata$LagID==olympicsdata$ID])
+gdp_rho <- (olympicsdata$GDP[olympicsdata$LagID==olympicsdata$ID] - RhoHat$coefficients[2]*olympicsdata$LagGDP[olympicsdata$LagID==olympicsdata$ID])
+host_rho <- (olympicsdata$host[olympicsdata$LagID==olympicsdata$ID] - RhoHat$coefficients[2]*olympicsdata$LagHost[olympicsdata$LagID==olympicsdata$ID])
+countries <- (olympicsdata$country[olympicsdata$LagID==olympicsdata$ID])
+years <- (olympicsdata$year[olympicsdata$LagID==olympicsdata$ID])
+
+summary(lm(medals_rho~population_rho + gdp_rho + host_rho + factor(countries) + factor(years)))
+```
+The standard errors on GDP and population are higher in the autocorrelation deleted models. Surprisingly, the standard error on host is lower in the autocorrelation deleted model.  The coefficients on all three variables are higher in the autocorrelation corrected model. The autocorrelation corrected model has its advantages, namely that it does not underestimate uncertainty. The benefit of the model in 2B is that we do not need to include logged data, so we have more data points. Overall I think the the autocorrelation corrected model is better since, as show in 1c, autocorrelation is present in the data.
+
+## Problem E
+```{r}
+# referenced code from Bailey's chapter 15 computing corner
+library(plm)
+summary(plm(medals~lag(medals) + population + GDP + host, data=olympicsdata, index=c("year", "country"), effect="twoways"))
+```
+The new model is dynamic, meaning that a lag(medals) argument is included on the right hand side now. The dynamic model produces biased coefficients, whereas the fixed effects model does not. Specificially, fixed effects and dynamic models are biased because the lagged dependent variable is endogenous. Even though bias is present, the coefficients on host and population actually are not that different across the models. Perhaps that's because we have a good amount of data; Bailey notes that the bias is inversely correlated with data quantity. The coefficients are also different across models because the coefficient in the dynamic model affects Y in the current and next time period.
+
+## Problem F
+```{r}
+library(plm)
+residuals <- as.numeric(names((plm(medals~lag(medals) + population + GDP + host, data=olympicsdata, index=c("year", "country"), effect="twoways")$residuals)))
+lagresiduals <- c(NA, residuals[1:length(residuals)-1])
+RhoHat<-lm(residuals~lagresiduals)
+summary(RhoHat)
+```
+There is! Just as in Part C, there is still autocorrelation. Bailey notes that dynamic models that do not include fixed effets are biased if the errors are correlated. I believe that this also applies to fixed effects, dynamic models. Since parts c and f show that errors are correlated, we may not want to use dynamic models here. Section 13.5 of Real Stats discusses how autocorrelated errors will cause bias in a dynamic model, while it will not in OLS, making the OLS model seem more attractive in this case.
+
+
+## Problem G
+```{r}
+# referenced code from Bailey's Chapter 15 computing corner
+# create lag variables
+olympicsdata$LagMedals <- c(NA, olympicsdata$medals[1:nrow(olympicsdata)-1])
+olympicsdata$LagPopulation <- c(NA, olympicsdata$population[1:nrow(olympicsdata)-1])
+olympicsdata$LagGDP <- c(NA, olympicsdata$GDP[1:nrow(olympicsdata)-1])
+olympicsdata$LagHost <- c(NA, olympicsdata$host[1:nrow(olympicsdata)-1])
+
+# create rho transformed variables
+# olympicsdata$medals_rho <- rep(NA, length(olympicsdata$medals))
+# olympicsdata$population_rho <- rep(NA, nrow(olympicsdata))
+# olympicsdata$gdp_rho <- rep(NA, nrow(olympicsdata))
+# olympicsdata$host_rho <- rep(NA, nrow(olympicsdata))
+
+# fill rho
+medals_rho <- (olympicsdata$medals[olympicsdata$LagID==olympicsdata$ID] - RhoHat$coefficients[2]*olympicsdata$LagMedals[olympicsdata$LagID==olympicsdata$ID])
+population_rho <- (olympicsdata$population[olympicsdata$LagID==olympicsdata$ID] - RhoHat$coefficients[2]*olympicsdata$LagPopulation[olympicsdata$LagID==olympicsdata$ID])
+gdp_rho <- (olympicsdata$GDP[olympicsdata$LagID==olympicsdata$ID] - RhoHat$coefficients[2]*olympicsdata$LagGDP[olympicsdata$LagID==olympicsdata$ID])
+host_rho <- (olympicsdata$host[olympicsdata$LagID==olympicsdata$ID] - RhoHat$coefficients[2]*olympicsdata$LagHost[olympicsdata$LagID==olympicsdata$ID])
+countries <- (olympicsdata$country[olympicsdata$LagID==olympicsdata$ID])
+years <- (olympicsdata$year[olympicsdata$LagID==olympicsdata$ID])
+
+summary(lm(medals_rho~ lag(medals_rho) + population_rho + gdp_rho + host_rho + factor(countries) + factor(years)))
+```
+The coefficients on all three variables are quite a bit smaller in part g than in both of the other models. I was a bit confused by this at first. Bailey notes that using a dynamic model when there are correlated errors can cause the coefficients to become nullified (since the lagged dependent variable will do such a good job of explaining the dependent variable). The results in part G show that the significance of population, gdp, and host are much lower, but I would not have expected this to be the case since rho-deletion should have gotten rid of the error. The coefficients are certainly biased since the model includes both fixed effects and a lagged Y, so perhaps that bias is what caused the coefficients on host, GDP, and population to change so much. I think the most likely cause is that lag(medals_rho) was an omitted variable before. I think that the lagged count of medals is probably a far better predictor than GDP, host, and population, so it makes sense that those coefficients are basically 0 when we include lagged medals in the model.
+
+However, I think that I also want to be careful when interpreting these results since there is a unit root on the lagged Y variable. Bailey notes that a unit root can lead to incorrect inferences.
+
+## Problem H
+The T parameter (the number of years of data we have for each country) indicates how biased our coefficients will be (higher T means less bias). In this case, T = 10.
+
+## Probem I
+I think the dynamic model is more useful in this case. I would expect that the number of medals earned by a country in the last olympics is highly indicative of how many they will win the next time for myriad reasons, so we should include lagged medals on the right hand side of our equation. Even though we're worried about bias, we have 10 data points per country, which is not negligible, so perhaps bias isn't a huge issue for us in this case. Since I am worried about nonstationarity, I think a differenced regression would be appropriate to use.
+
+## Problem J
+The models with more data (i.e. those that do not include lagged variables) are likely to be more robust in my opinion. That's because each individual data point should hold less weight, all else being equal, if it is in a dataset that has many points as opposed to fewer points. However, I think we have enough data in either case that robustness shouldn't be a major concern.
